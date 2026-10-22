@@ -2,6 +2,20 @@
 
 All notable changes to OhmShield（前身 OhmGateShield）. 版本規則：MVP = 1.0.0；小修改升最後碼、局部功能升中間碼、大改版升第一碼。
 
+## [OhmShield 1.1.0] — 2026-10-22 · 精準判定「對外」＋真的修掉
+
+### Added
+- `core/exposure.py`: works out which packages your **public services actually use** — static import closure from each service entry script (incl. lazy imports and local modules) + compiled modules loaded by the live process (read with ctypes, no PowerShell) + the full dependency tree from package metadata. Configure `exposed_services` (entry + port) and `exposed_envs` (venvs that serve the public as a whole).
+- `vuln_watch.py` 1.4: findings are `exposed` only when a public service really uses the package (`used_by` lists which); everything else is reported as local. Package inventory via `importlib.metadata`, so uv-created venvs without pip are no longer counted as 0 packages.
+- `shield_status.py` 1.1: local (non-public) findings shown as an info to-do instead of being ignored.
+
+### Fixed
+- Locks held by a process that was killed are released immediately (PID liveness check), instead of blocking runs until the stale timeout.
+- `patch --dry` with nothing to patch now clears the old "needs review" list.
+
+### Real-world result
+- Public services turned out to use 37 packages (not the whole 4,000+ package interpreter). Fixed for real: Pillow 9.5 → **13.0.0** (system Python and the phone-camera hub venv — the services resize/verify uploaded images, so this mattered), aiohttp 3.13.5 → **3.14.4** + yarl 1.25.1 (TTS service). Verified with functional tests (resize/JPEG/verify/formats/rembg/TTS synthesis) and service restarts. Score 65 🟡 → **95 🟢**.
+
 ## [OhmShield 1.0.0] — 2026-10-22 · 升級成完整資安中心
 
 ### Added

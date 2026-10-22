@@ -9,7 +9,7 @@ import os, sys, json, time, datetime
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from shield_common import CFG, load_json, save_json, now_s, Lock
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 
 
 def _age_h(ts):
@@ -63,6 +63,9 @@ def build(write=True):
         todo.append({"line": "vuln", "level": "warn", "text": "漏洞情報 %.0f 小時沒有巡檢" % vage})
     if crit:
         todo.append({"line": "vuln", "level": "alert", "text": "對外服務有嚴重漏洞未修：%s" % "、".join(crit[:5])})
+    local_n = len([f for f in F if not f.get("exposed")])
+    if local_n:
+        todo.append({"line": "vuln", "level": "info", "text": "本機工具環境（不對外）還有 %d 筆已知漏洞，不影響對外安全，有空再整理" % local_n})
     held = (vw.get("patch") or {}).get("held") or []
     if held:
         todo.append({"line": "vuln", "level": "info", "text": "%d 個套件需人工評估（跨大版本／核心套件）：%s" % (len(held), "、".join(h["pkg"] for h in held[:5]))})
@@ -70,7 +73,8 @@ def build(write=True):
         if n.startswith("⚠"):
             vuln -= 10
             todo.append({"line": "vuln", "level": "alert", "text": n.lstrip("⚠ ")})
-    lines["vuln"] = {"score": max(0, vuln), "packages": vm.get("packages_checked", 0), "exposed": vm.get("exposed_findings", 0),
+    lines["vuln"] = {"score": max(0, vuln), "packages": vm.get("packages_checked", 0), "exposed": vm.get("exposed_findings", 0), "local": local_n,
+                     "exposed_packages": vm.get("exposed_packages"), "exposure_mode": vm.get("exposure_mode"),
                      "critical_pkgs": crit, "high_pkgs": len(high), "kev": vm.get("kev_recent", 0), "last_run": vm.get("last_run", ""),
                      "patched_last": len((vw.get("patch") or {}).get("patched") or [])}
 

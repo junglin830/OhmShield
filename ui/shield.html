@@ -3,7 +3,7 @@
      所有資料都走 /api/shield/*（core/shield_api.py），兩個入口行為一致。 -->
 <html lang="zh-Hant" data-theme="dark">
 <head>
-<meta charset="UTF-8"><meta name="application-version" content="1.0.0">
+<meta charset="UTF-8"><meta name="application-version" content="1.1.0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>OhmShield 歐姆資安中心</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2330d158' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z'/%3E%3Cpath d='m9 12 2 2 4-4'/%3E%3C/svg%3E">
@@ -696,7 +696,7 @@ function renderVuln(){
   $('vExp').textContent=m.exposed_findings||0; const bs=m.by_severity||{}; $('vCH').textContent=(bs.CRITICAL||0)+(bs.HIGH||0);
   $('vAll').textContent=m.findings||0; $('vKev').textContent=m.kev_recent||0;
   const age=(Date.now()-new Date((m.last_run||'').replace(' ','T')).getTime())/3600e3; $('vIntel').classList.toggle('stale',!(age<30));
-  $('vTxt').innerHTML='v'+esc(m.version||'')+' · 上次自動巡檢 '+esc((m.last_run||'').slice(5,16))+' · 來源 OSV.dev＋CISA KEV（目錄 '+esc(m.kev_catalog||'')+'）· 本輪新增 '+(m.new_this_run||0);
+  $('vTxt').innerHTML='v'+esc(m.version||'')+' · 上次自動巡檢 '+esc((m.last_run||'').slice(5,16))+' · 來源 OSV.dev＋CISA KEV（目錄 '+esc(m.kev_catalog||'')+'）· 本輪新增 '+(m.new_this_run||0)+(m.exposure_mode==='import-closure'?' · 對外判定：實際用到的 '+(m.exposed_packages||0)+' 個套件':'');
   $('vNotes').innerHTML=(VW.notes||[]).map(n=>'<p style="margin-bottom:6px">'+(/^⚠/.test(n)?'<span class="tag hi">注意</span> ':'<span class="tag self">安全</span> ')+esc(n.replace(/^⚠\s*/,''))+'</p>').join('')
     +'<p>'+((m.exposed_findings||0)?'<span class="tag hi">待修</span> 對外服務用到的套件有 <b>'+m.exposed_findings+'</b> 個已知漏洞，見下表修補版。':'<span class="tag self">安全</span> 對外服務用到的套件目前沒有已知漏洞。')+'</p>';
   const B=VW.binaries||{}; $('vBins').innerHTML=Object.keys(B).map(k=>'<div class="r"><span>'+esc(k)+'</span><span>'+(B[k]?esc(B[k]):'未安裝')+'</span></div>').join('');
@@ -704,7 +704,7 @@ function renderVuln(){
   $('vBody').innerHTML=list.length?list.slice(0,300).map(f=>'<tr><td><b>'+esc(f.component)+'</b>'+(f.exposed?' <span class="tag hi">對外</span>':'')+'</td><td class="m">'+esc(f.version)+'</td>'
     +'<td><span class="tag '+(SEVC[f.severity]||'lo')+'">'+(SEVN[f.severity]||esc(f.severity))+'</span></td>'
     +'<td class="m"><a href="https://osv.dev/vulnerability/'+encodeURIComponent(f.id)+'" target="_blank" rel="noopener" style="color:var(--acc2)">'+esc((f.cve&&f.cve[0])||f.id)+'</a></td>'
-    +'<td class="p" title="'+esc(f.summary)+'">'+esc(f.summary)+'</td><td class="m">'+esc(f.fixed||'—')+'</td>'
+    +'<td class="p" title="'+esc(f.summary)+(f.used_by&&f.used_by.length?'｜用到它的服務：'+esc(f.used_by.join('、')):'')+'">'+esc(f.summary)+'</td><td class="m">'+esc(f.fixed||'—')+'</td>'
     +'<td class="dim" title="'+esc(f.where)+'">'+esc((f.where||'').split('\\').slice(-3).join('\\'))+'</td></tr>').join('')
     :'<tr><td colspan="7" class="ph">'+(vSev==='exp'?'對外服務沒有已知漏洞 ✓':'沒有符合的漏洞')+'</td></tr>';
   const P=VW.patch;

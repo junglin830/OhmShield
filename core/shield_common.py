@@ -76,8 +76,8 @@ class Lock:
                 return True
             except FileExistsError:
                 try:
-                    if time.time() - os.path.getmtime(self.path) > self.stale:
-                        os.remove(self.path)
+                    if time.time() - os.path.getmtime(self.path) > self.stale or not self._owner_alive():
+                        os.remove(self.path)      # 舊鎖：超時，或持有的行程已經不在（被強制結束留下的）
                         continue
                 except OSError:
                     pass
@@ -94,8 +94,15 @@ class Lock:
                 pass
             self.fd = None
 
+    def _owner_alive(self):
+        try:
+            pid = int(open(self.path, encoding="utf-8").read().split()[0])
+        except Exception:
+            return True
+        return pid_alive(pid)
+
     def held(self):
-        return os.path.exists(self.path) and time.time() - os.path.getmtime(self.path) <= self.stale
+        return os.path.exists(self.path) and time.time() - os.path.getmtime(self.path) <= self.stale and self._owner_alive()
 
     def __enter__(self):
         if not self.acquire():
@@ -104,6 +111,26 @@ class Lock:
 
     def __exit__(self, *a):
         self.release()
+
+
+def pid_alive(pid):
+    if os.name == "nt":
+        import ctypes
+        from ctypes import wintypes
+        k32 = ctypes.windll.kernel32
+        k32.OpenProcess.restype = wintypes.HANDLE
+        h = k32.OpenProcess(0x1000, False, int(pid))        # PROCESS_QUERY_LIMITED_INFORMATION
+        if not h:
+            return False
+        code = wintypes.DWORD()
+        ok = k32.GetExitCodeProcess(wintypes.HANDLE(h), ctypes.byref(code))
+        k32.CloseHandle(wintypes.HANDLE(h))
+        return bool(ok) and code.value == 259                # STILL_ACTIVE
+    try:
+        os.kill(int(pid), 0)
+        return True
+    except OSError:
+        return False
 
 
 def valid_ip(ip):

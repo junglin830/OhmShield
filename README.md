@@ -38,6 +38,7 @@ OhmShield/
 ├─ core/            唯一的引擎與 API（標準函式庫）
 │  ├─ ip_intel.py       IP 身分辨識＋自動封鎖（建議每小時）
 │  ├─ vuln_watch.py     漏洞情報＋安全自動修補（建議每天）
+│  ├─ exposure.py       分析對外服務實際用到哪些套件
 │  ├─ shield_status.py  三條線合成總分／燈號／待處理
 │  ├─ shield_api.py     /api/shield/* 唯一實作（兩個入口都呼叫它）
 │  ├─ shield_common.py  設定、檔案鎖、封鎖清單
@@ -60,6 +61,15 @@ OhmShield/
 - 打 `.env`、`wp-login.php`、`phpmyadmin`、`.git`、路徑穿越，或用 zgrab／masscan／nuclei 的 → **自動封鎖**。自家、站長、平台預覽、搜尋引擎**永不自動封**。
 - RDAP 裡的個人聯絡人一律不存，只記組織名。
 - 指令：`run`、`run --dry`、`recheck [--max N]`、`recheck-empty`、`show <ip>`、`block <ip> [備註]`、`unblock <ip>`。
+
+### 對外判定 `core/exposure.py`
+不是整個 Python 都算「對外」。設定 `exposed_services`（每個對外服務的進入點腳本＋埠號）後，引擎會分析服務**實際用到**的套件：
+- 靜態追 import，連函式裡的延遲 import 和本地模組都算。
+- 加上執行中行程已載入的編譯模組。
+- 再展開這些套件的依賴。
+
+只有這些套件的漏洞算「對外」並扣分；其他列為本機，照樣顯示。整包對外的 venv 放進 `exposed_envs`。
+> 實測：對外服務只用到 37 個套件，不是整個 4,000 多個。真正要修的是 Pillow（服務會縮放、驗證使用者上傳的圖片）和 aiohttp。修完後總分 65 🟡 → 95 🟢。
 
 ### 漏洞情報 `core/vuln_watch.py`
 - **盤點**：對外服務用的 Python、其他直譯器與 `.venv`、`package-lock.json`，以及 Node.js／cloudflared／Git／Chrome／作業系統的版本。也會抓**不該存在的伺服器軟體**（PHP／Apache／Nginx／XAMPP）。

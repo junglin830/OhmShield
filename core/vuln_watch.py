@@ -21,7 +21,7 @@ Standard library only. MIT License.
 """
 import sys, os, re, json, glob, time, datetime, subprocess, urllib.request, collections
 
-VERSION = "1.3.0"
+VERSION = "1.4.1"
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from shield_common import CFG, Lock   # 設定與鎖（兩個入口共用）
@@ -115,10 +115,21 @@ def find_venvs():
     return sorted(set(pys + [p for p in EXTRA_PY if os.path.exists(p)]))
 
 
+def _norm(n):
+    return re.sub(r"[-_.]+", "-", n).lower()
+
+
 def pip_list(py):
-    out = sh([py, "-m", "pip", "list", "--format=json", "--disable-pip-version-check"], 120)
+    """用 importlib.metadata 列套件（uv 建的 venv 沒有 pip，用 pip list 會得到 0 個）"""
+    code = ("import json,importlib.metadata as m\n"
+            "r={}\n"
+            "for d in m.distributions():\n"
+            "  n=(d.metadata.get('Name') or '').strip()\n"
+            "  if n: r[n]=d.version\n"
+            "print(json.dumps(sorted(r.items())))")
+    out = sh([py, "-c", code], 120)
     try:
-        return [(d["name"], d["version"]) for d in json.loads(out)]
+        return [tuple(x) for x in json.loads(out.splitlines()[-1])]
     except Exception:
         return []
 
@@ -270,6 +281,13 @@ def run(notify=True, baseline=None):
     prev = load(OUT, {})
     running = running_pythons()
     pys = [SYS_PY] + find_venvs()
+    try:
+        import exposure
+        used = exposure.analyze()          # {套件: [用到它的對外服務]}；None＝沒設定，整個系統 Python 視為對外
+    except Exception as ex:
+        log("對外暴露分析失敗，改用保守做法（整個系統 Python 視為對外）：%r" % ex)
+        used = None
+    exp_envs = {p.lower() for p in CFG.get("exposed_envs", [])}
     envs = []
     queries, qmeta = [], []
     for py in pys:
@@ -277,12 +295,17 @@ def run(notify=True, baseline=None):
             continue
         pkgs = pip_list(py)
         live = running.get(py.lower(), [])
-        # venv 的 pythonw 也算同一個環境
         live += running.get(py.lower().replace("python.exe", "pythonw.exe"), [])
-        envs.append({"type": "python", "path": py, "packages": len(pkgs), "running": sorted(set(live))[:12], "exposed": bool(live)})
+        env_exposed = bool(live) or py.lower() in exp_envs
+        envs.append({"type": "python", "path": py, "packages": len(pkgs), "running": sorted(set(live))[:12], "exposed": env_exposed,
+                     "exposed_packages": (len([1 for n, _ in pkgs if _norm(n) in used]) if (used is not None and py == SYS_PY) else None)})
         for n, v in pkgs:
+            if py == SYS_PY and used is not None:
+                ex_ = _norm(n) in used
+            else:
+                ex_ = env_exposed
             queries.append(("PyPI", n, v))
-            qmeta.append((py, "python", n, v, bool(live)))
+            qmeta.append((py, "python", n, v, ex_))
     for lock, pk in npm_locks():
         envs.append({"type": "npm", "path": lock, "packages": len(pk), "running": [], "exposed": False})
         for n, v in pk:
@@ -301,6 +324,7 @@ def run(notify=True, baseline=None):
             info = osv_detail(vid, cache)
             fx = pick_fixed(ver, info.get("fixed") or [])
             findings.append({"component": name, "type": typ, "version": ver, "where": where, "exposed": exposed,
+                             "used_by": (used or {}).get(_norm(name), []) if (used is not None and where == SYS_PY) else [],
                              "id": vid, "cve": info.get("cve", []), "severity": info.get("severity", ""), "cvss": info.get("cvss", ""),
                              "summary": info.get("summary", ""), "fixed": fx, "published": info.get("published", ""),
                              "fix_cmd": ('"%s" -m pip install -U "%s>=%s"' % (where, name, fx)) if typ == "python" and fx else
@@ -319,6 +343,7 @@ def run(notify=True, baseline=None):
     sev_count = collections.Counter(f["severity"] or "UNKNOWN" for f in findings)
     meta = {"version": VERSION, "last_run": now_s(), "took_sec": round(time.time() - t0, 1), "packages_checked": len(queries),
             "envs": len(envs), "findings": len(findings), "exposed_findings": sum(1 for f in findings if f["exposed"]),
+            "exposure_mode": "import-closure" if used is not None else "whole-interpreter", "exposed_packages": len(used or {}),
             "by_severity": dict(sev_count), "kev_catalog": kev_ver, "kev_recent": len(kev), "new_this_run": len(new)}
     out = {"_meta": meta, "binaries": bins, "envs": envs, "findings": findings[:3000], "kev": kev, "patch": prev.get("patch"),
            "notes": (["作業系統有近期已遭利用漏洞：確認 Windows Update／系統更新已裝 KEV 新增日之後的安全更新"] if any(k["component"] == "Windows" for k in kev) else []) + ["PHP 未安裝：不受 PHP 類漏洞（例如 2026-10 PHP2Shell CVE-2026-109618/109619）影響" if not bins.get("PHP") else "⚠ 偵測到 PHP %s，需確認是否 ≥ 8.5.12／8.4.27／8.3.36／8.2.35" % bins["PHP"]]}
@@ -368,8 +393,11 @@ def patch(dry=False):
         if f.get("type") == "python" and f.get("where", "").lower() == py.lower() and f.get("exposed") and f.get("fixed"):
             need[f["component"]].append(f)
     if not need:
-        log("patch：沒有要修的")
-        return
+        data["patch"] = {"ts": now_s(), "patched": [], "failed": [], "rolled_back": [], "held": [], "plan": [], "dry": dry,
+                         "note": "對外服務沒有需要修補的已知漏洞"}
+        save(OUT, data)
+        log("patch：對外服務沒有要修的")
+        return data["patch"]
     names = sorted(need)
     meta = _py_json(py, "import json,importlib.metadata as m;r={}\n"
                         "for n in %r:\n"

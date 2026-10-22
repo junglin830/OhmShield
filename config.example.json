@@ -6,13 +6,16 @@
   "ip_notes": "data/ip_notes.json",
   "engine_log": "data/ip_intel.log",
   "auto_block": true,
-  "self_ua_markers": ["my-health-check", "uptime-kuma", "UptimeRobot"],
+  "self_ua_markers": [
+    "my-health-check",
+    "uptime-kuma",
+    "UptimeRobot"
+  ],
   "owner_paths_regex": "^/admin\\b|^/dashboard\\b|^/api/shield",
   "owner_label": "站長",
   "home_country": "TW",
   "max_lookups": 80,
   "recheck_days": 7,
-
   "vuln_report": "data/vuln_watch.json",
   "vuln_log": "data/vuln_watch.log",
   "exposed_python": "C:\\Python312\\python.exe",
@@ -21,9 +24,24 @@
   "scan_root": "D:\\my-projects",
   "scan_skip_regex": "models|backups",
   "notify_command": null,
-
   "secguard_report": "",
   "status_file": "data/shield_status.json",
   "lock_dir": "data/.locks",
-  "ui_links": {}
+  "ui_links": {},
+  "exposed_services": [
+    {
+      "name": "public web server",
+      "entry": "D:\\my-site\\server.py",
+      "port": 8080
+    },
+    {
+      "name": "api backend",
+      "entry": "D:\\my-site\\api\\app.py",
+      "port": 5000,
+      "extra_dirs": [
+        "D:\\my-site\\lib"
+      ]
+    }
+  ],
+  "exposed_envs": []
 }
