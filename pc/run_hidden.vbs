@@ -1,0 +1,7 @@
+Set s = CreateObject("WScript.Shell")
+exe = WScript.Arguments(0)
+args = ""
+For i = 1 To WScript.Arguments.Count - 1
+    args = args & " " & WScript.Arguments(i)
+Next
+s.Run """" & exe & """" & args, 0, False

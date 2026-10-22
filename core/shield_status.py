@@ -9,7 +9,7 @@ import os, sys, json, time, datetime
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from shield_common import CFG, load_json, save_json, now_s, Lock
 
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 
 
 def _age_h(ts):

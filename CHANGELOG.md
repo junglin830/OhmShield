@@ -2,6 +2,11 @@
 
 All notable changes to OhmShield（前身 OhmGateShield）. 版本規則：MVP = 1.0.0；小修改升最後碼、局部功能升中間碼、大改版升第一碼。
 
+## 1.2.0 — 2026-10-22
+- 併入 OhmSecGuard 1.2.1 成為 `pc/` 模組：一個倉庫涵蓋網頁門牌、漏洞情報、電腦三條線。
+- `config.example.json` 的 `secguard_report` 預設指向 `pc/secguard_data/report.json`，裝好即自動合分。
+- 原 OhmSecGuard 倉庫改為指向本倉庫的封存說明。
+
 ## [OhmShield 1.1.0] — 2026-10-22 · 精準判定「對外」＋真的修掉
 
 ### Added

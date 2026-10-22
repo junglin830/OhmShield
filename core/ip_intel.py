@@ -19,7 +19,7 @@ Standard library only. MIT License.
 """
 import sys, os, json, re, time, socket, ipaddress, datetime, urllib.request, urllib.error, collections, threading
 
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from shield_common import CFG, Lock, block_ip, unblock_ip, valid_ip   # 設定、鎖、封鎖清單（兩個入口共用）

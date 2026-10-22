@@ -4,7 +4,7 @@
 
 - 🌐 **網頁門牌**：連進你網站的每個 IP 是誰，自動查清楚並寫備註；惡意掃描自動封鎖。
 - 🧬 **漏洞情報**：你實際在跑的軟體有沒有中已知漏洞，每天自動比對，安全範圍內自動修補。
-- 💻 **電腦**：讀 [OhmSecGuard](https://github.com/junglin830/OhmSecGuard) 的 Windows 巡檢報告，合進總分（選填）。
+- 💻 **電腦**：內建 `pc/` 模組（原 OhmSecGuard，已併入）——只看不改的 Windows 巡檢：Proxy 被改／斷網、Defender 排除清單、隱藏排程、根憑證、hosts 劫持、CMD 閃窗元兇。每月全掃＋事件觸發快檢，結果自動合進總分。
 
 三條線合成**總分＋紅黃綠燈＋待處理清單**。入口有兩個，用的是同一套引擎、同一份資料、同一個介面頁：
 
@@ -15,7 +15,7 @@
 
 引擎零依賴（只用 Python 標準函式庫）· Windows／Linux · MIT
 
-> 前身是 OhmGateShield 1.0.0（網頁門牌＋漏洞情報）。這一版把它升級成完整的資安中心。
+> 前身是 OhmGateShield 1.0.0（網頁門牌＋漏洞情報）；1.2.0 起把 OhmSecGuard 併進來成為 `pc/` 模組，一個倉庫就是完整的資安中心。
 
 ---
 
@@ -43,6 +43,7 @@ OhmShield/
 │  ├─ shield_api.py     /api/shield/* 唯一實作（兩個入口都呼叫它）
 │  ├─ shield_common.py  設定、檔案鎖、封鎖清單
 │  └─ selftest.py       17 個情境，不連網
+├─ pc/             電腦線（原 OhmSecGuard）：secguard.py＋PowerShell 收集器，詳見 pc/README_SecGuard.md
 ├─ ui/shield.html   唯一的介面頁
 ├─ app/             桌面視窗程式外殼（pywebview＋常駐圖示，打包成 exe）
 └─ config.json      你的路徑與規則（從 config.example.json 複製）
@@ -51,6 +52,17 @@ OhmShield/
 - **只有引擎會寫資料**：巡檢、封鎖／解封、修補都經過 `shield_common.Lock` 檔案鎖。視窗程式和網頁同時按，也不會互相蓋掉。
 - **兩個入口互不依賴**：視窗程式直接讀本機檔案；網頁那邊掛了，視窗照樣能用，反過來也一樣。
 - **權限交給外殼**：視窗程式每次啟動產生隨機 token，只有帶 token 的請求能讀寫資料，也會檢查 Origin。網頁入口請接你自己的登入驗證。
+
+## 電腦線（pc/）快速開始
+
+```powershell
+cd pc
+copy config.example.json config.json   # 視需要填 hosts_must_block 等
+python secguard.py scan                 # 第一次建立基準
+powershell -ExecutionPolicy Bypass -File install_tasks.ps1   # 每月全掃＋事件觸發快檢（隱藏執行）
+```
+
+報告寫在 `pc/secguard_data/report.json`，`config.example.json` 的 `secguard_report` 已預設指到這裡，OhmShield 總分會自動帶入「電腦」線。只看不改：除非你自己執行 `python secguard.py fix <id>`，不會動任何設定。
 
 ## 引擎重點
 

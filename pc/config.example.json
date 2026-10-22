@@ -1,0 +1,6 @@
+{
+  "_doc": "複製成 config.json 再改。全部欄位都可省略。",
+  "notify": "toast",
+  "own_hints": "(?i)(\\\\MyTools\\\\|MyCompany_|OhmSecGuard|run_hidden\\.vbs)",
+  "hosts_must_block": ["urban-mint-731.com", "blueprint-51.technology", "27oakstreet.cyou"]
+}

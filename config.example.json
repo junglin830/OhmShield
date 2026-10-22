@@ -24,7 +24,7 @@
   "scan_root": "D:\\my-projects",
   "scan_skip_regex": "models|backups",
   "notify_command": null,
-  "secguard_report": "",
+  "secguard_report": "pc/secguard_data/report.json",
   "status_file": "data/shield_status.json",
   "lock_dir": "data/.locks",
   "ui_links": {},

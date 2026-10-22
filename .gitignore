@@ -21,3 +21,6 @@ osclaw/
 作法手冊*.md
 CLAUDE.md
 AGENTS.md
+pc/secguard_data/
+pc/config.json
+pc/__pycache__/
