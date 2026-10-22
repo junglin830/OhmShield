@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<!-- OhmGateShield dashboard — MIT License · https://github.com/junglin830/OhmGateShield
-     Edit OGS_CONFIG below to point at your files / endpoints. Serve this file from the same origin as the JSON files. -->
+<!-- OhmShield 歐姆資安中心 · 唯一的介面頁（視窗程式與 OSCLAW 共用）— MIT License · https://github.com/junglin830/OhmShield
+     所有資料都走 /api/shield/*（core/shield_api.py），兩個入口行為一致。 -->
 <html lang="zh-Hant" data-theme="dark">
 <head>
-<meta charset="UTF-8"><meta name="application-version" content="1.3.0">
+<meta charset="UTF-8"><meta name="application-version" content="1.0.0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>OhmGateShield</title>
+<title>OhmShield 歐姆資安中心</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2330d158' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z'/%3E%3Cpath d='m9 12 2 2 4-4'/%3E%3C/svg%3E">
 <style>
 :root{
@@ -165,7 +165,7 @@ td.dim{color:var(--dim2)}
 .hit .u{grid-column:2;font-size:11px;color:var(--dim2);overflow-wrap:anywhere}
 .drF{padding:14px 22px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end}
 
-.mode{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:18px}
+.mode{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
 @media(max-width:700px){.mode{grid-template-columns:1fr}}
 .mode button{display:flex;align-items:center;gap:12px;text-align:left;border:1px solid var(--line);background:var(--card);color:var(--txt);border-radius:var(--r-md);padding:14px 16px;cursor:pointer;transition:.25s var(--ease)}
 .mode button:hover{border-color:var(--dim2)}
@@ -199,6 +199,21 @@ td.dim{color:var(--dim2)}
 .evi .lb{font-size:15px;font-weight:750;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .evi p{font-size:12.5px;color:var(--dim);margin-top:6px;line-height:1.6}
 .evi ul{margin:8px 0 0 16px;font-size:11.5px;color:var(--dim2);line-height:1.7}
+/* 總狀態 */
+.sum{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;border:1px solid var(--line);background:var(--card);border-radius:var(--r-lg);padding:18px 20px;margin-bottom:16px}
+.sumL{display:flex;align-items:center;gap:16px}
+.ring{width:78px;height:78px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:conic-gradient(var(--rc,var(--ok)) calc(var(--p,0)*1%),var(--line) 0);position:relative}
+.ring::before{content:'';position:absolute;inset:7px;border-radius:50%;background:var(--card-solid)}
+.ring b,.ring small{position:relative}
+.ring b{font-size:24px;font-weight:800;line-height:1}
+.ring small{font-size:10px;color:var(--dim2)}
+.sLamp{font-size:17px;font-weight:750}
+.sMeta{font-size:12px;color:var(--dim2);margin-top:3px}
+.sTodo{font-size:12.5px;color:var(--dim);display:flex;flex-direction:column;gap:5px;min-width:0}
+.sTodo div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sAct{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+.sJobs{font-size:11.5px;color:var(--warn);width:100%;text-align:right}
+@media(max-width:900px){.sum{grid-template-columns:1fr}.sAct{justify-content:flex-start}.sJobs{text-align:left}}
 #toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--card-solid);color:var(--txt);border:1px solid var(--line);padding:11px 22px;border-radius:var(--r-pill);opacity:0;transition:.3s var(--ease);pointer-events:none;z-index:99;box-shadow:var(--shadow);font-size:13px}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
@@ -213,7 +228,7 @@ td.dim{color:var(--dim2)}
 </head>
 <body>
 <nav><div class="navIn">
-  <a class="brand" href="#"><span class="sh"><svg viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></span><span class="tx"><small>OHMGATESHIELD</small>門牌防護中心</span></a>
+  <a class="brand" href="#"><span class="sh"><svg viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></span><span class="tx"><small>OHMSHIELD</small>歐姆資安中心</span></a>
   <span class="sp"></span>
   <span class="live" id="live"><i></i><span id="liveTxt">即時監看</span></span>
   <button class="btn" onclick="loadAll(true)">↻ 重新整理</button>
@@ -223,18 +238,31 @@ td.dim{color:var(--dim2)}
 <main class="wrap">
   <div class="head">
     <div>
-      <div class="k">OHMGATESHIELD · IP INTEL · VULN WATCH</div>
-      <h1>門牌防護中心</h1>
-      <p>誰在敲門、誰可疑、誰被擋下，以及「我們在跑的軟體有沒有中漏洞」。<b style="color:var(--txt)">網頁門牌</b>＝連進你網站的每個 IP；<b style="color:var(--txt)">漏洞情報</b>＝每天比對 OSV.dev／CISA KEV。</p>
+      <div class="k">OHMSHIELD · 網頁門牌 · 漏洞情報 · 電腦</div>
+      <h1>歐姆資安中心</h1>
+      <p>誰在敲門、誰可疑、誰被擋下；我們在跑的軟體有沒有中漏洞；電腦本身安不安全——一個分數、三條線。</p>
     </div>
     <div class="rng" id="rng">
       <button data-h="1">1 小時</button><button data-h="24" class="on">24 小時</button><button data-h="168">7 天</button><button data-h="0">全部</button>
     </div>
   </div>
 
+  <section class="sum" id="sum">
+    <div class="sumL"><div class="ring" id="sRing"><b id="sScore">–</b><small>總分</small></div>
+      <div><div class="sLamp" id="sLamp">讀取中…</div><div class="sMeta" id="sMeta"></div></div></div>
+    <div class="sTodo" id="sTodo"></div>
+    <div class="sAct">
+      <button class="btn" data-scan="ip">↻ 巡檢門牌</button>
+      <button class="btn" data-scan="vuln">↻ 漏洞巡檢</button>
+      <button class="btn pri" data-scan="patch">巡檢＋安全修補</button>
+      <span class="sJobs" id="sJobs"></span>
+    </div>
+  </section>
+
   <div class="mode" id="mode">
     <button data-m="web" class="on"><span class="mi">🌐</span><span><b>網頁門牌</b><small>對外流量 · 監看＋封鎖</small></span></button>
     <button data-m="vuln"><span class="mi">🧬</span><span><b>漏洞情報</b><small>我們的軟體有沒有中 · 每天自動</small></span></button>
+    <button data-m="pc"><span class="mi">💻</span><span><b>電腦入侵</b><small>本機防線 · 只讀</small></span></button>
   </div>
   <div id="m-web">
   <section class="kpis">
@@ -319,8 +347,9 @@ td.dim{color:var(--dim2)}
   <!-- 版本紀錄 Change list -->
   <section class="pane" id="p-log">
     <div class="box"><h3>Change list 版本紀錄</h3>
-      <div class="topList">
-        <div class="find"><div class="h"><span class="tag self">v1.0.0</span>2026-10-22 · 首次開源</div><p>IP Intel（PTR＋RDAP＋行為判定 7 種身分、惡意掃描自動封鎖、搜尋引擎官方網域驗證）＋Vuln Watch（OSV.dev＋CISA KEV、安全自動修補）＋本儀表板。完整紀錄見 CHANGELOG.md。</p></div>
+      <div class="topList" id="chgList">
+        <div class="find"><div class="h"><span class="tag self">V1.0.0</span>2026-10-22 · OhmShield 專案化</div><p>網頁門牌、漏洞情報、電腦三條線合成<b>一個總分＋紅黃綠燈＋待處理清單</b>；同一套 core 引擎、同一份資料、同一個介面頁，兩個入口：<b>桌面視窗程式</b>（右下角盾牌常駐、離線可用）與 <b>OSCLAW</b>（手機遠端、LINE 查詢）。所有寫入動作加檔案鎖；頁面可直接觸發巡檢與安全修補。</p></div>
+        <div class="find"><div class="h"><span class="tag self">前身</span>2026-10-22 · 資安 IP 封鎖中心 V1.0～V1.3</div><p>IP 情報引擎（PTR＋RDAP＋行為判定 7 種身分、惡意掃描自動封鎖、搜尋引擎官方網域驗證）；漏洞情報（OSV.dev＋CISA KEV、一次一個 --no-deps 安全修補、首輪對外漏洞 212→112）；起因 HITCON PHP2Shell 警示。完整紀錄見 CHANGELOG.md。</p></div>
       </div>
     </div>
   </section>
@@ -329,18 +358,18 @@ td.dim{color:var(--dim2)}
   <section class="pane" id="p-rule">
     <div class="grid2">
       <div class="box"><h3>伺服器端（你的網站）</h3><ul>
-        <li>讓網站把每個請求寫成 JSON Lines（或直接用 nginx／Apache combined 格式），並拒絕 <b>blocked_ips.json</b> 裡的 IP。</li>
+        <li>網站把每個請求寫成 JSON Lines（或用 nginx／Apache combined 格式），並拒絕 <b>blocked_ips.json</b> 裡的 IP。</li>
         <li>建議另外做速率限制（例如同 IP 60 秒內超過 30 次頁面導覽就封）。</li>
-        <li>封鎖／解封 API（選填）務必加管理員驗證。</li>
+        <li>封鎖、解封、巡檢、修補都經過 core 的檔案鎖，視窗程式和 OSCLAW 同時按也不會打架。</li>
       </ul></div>
       <div class="box"><h3>IP 情報引擎（全自動）</h3><ul>
-        <li>排程每小時執行 <b>ip_intel.py run</b>：每個新 IP 反查主機名（PTR）＋網段擁有者（RDAP），同網段共用快取，7 天重查一次。</li>
+        <li>排程每小時執行 <b>core/ip_intel.py run</b>：每個新 IP 反查主機名（PTR）＋網段擁有者（RDAP），同網段共用快取，7 天重查一次。</li>
         <li>依證據自動判定身分並寫備註：自家／站長裝置（推定）／平台連結預覽（LINE、FB…）／搜尋引擎（Google、Bing 會驗證官方網域，冒充的抓出來）／一般訪客／雲端主機／惡意掃描。</li>
         <li><b>惡意掃描自動封鎖</b>（reason=auto:intel），自家、站長、平台、搜尋引擎永不自動封；誤封可在封鎖清單一鍵解封。</li>
         <li>結果檔：<b>ip_notes.json</b>；紀錄：<b>ip_intel.log</b>。</li>
       </ul></div>
       <div class="box"><h3>本頁判讀（只影響顯示）</h3><ul>
-        <li><b>自家</b>：UA 符合 OGS_CONFIG.selfUa，或該 IP 曾送出這些 UA。</li>
+        <li><b>自家</b>：UA 是你自己的監控程式（config 的 self_ua_markers），或該 IP 曾送出這些 UA。</li>
         <li><b>預覽爬蟲</b>：facebookexternalhit、LINE、bot、spider、crawl、curl、python、Go-http、scanner 等。</li>
         <li><b>系統 API</b>：/api/ 等程式輪詢。</li>
         <li><b>風險分數</b>：掃描路徑（.env、wp-、phpmyadmin、.git、.php、cgi-bin…）+40、每分鐘峰值 ≥20 +25、機器人 UA +15、無 UA +15、頁面種類 ≥25 +10。≥60 高、≥30 中。</li>
@@ -372,6 +401,29 @@ td.dim{color:var(--dim2)}
   </div>
   <div class="box" style="margin-top:16px"><h3>CISA KEV：近 30 天新增、且是我們有裝的產品（已遭實際攻擊利用）</h3><div id="vKevList"><div class="ph">讀取中…</div></div></div>
   </div>
+  <div id="m-pc" style="display:none">
+  <section class="kpis" style="grid-template-columns:repeat(5,1fr)">
+    <div class="kpi"><div class="v" id="pScore">–</div><div class="l">電腦巡檢分數</div></div>
+    <div class="kpi"><div class="v" id="pFw">–</div><div class="l">Windows 防火牆</div></div>
+    <div class="kpi"><div class="v" id="pRdp">–</div><div class="l">遠端桌面 RDP</div></div>
+    <div class="kpi"><div class="v" id="pDef">–</div><div class="l">Defender 即時防護</div></div>
+    <div class="kpi"><div class="v" id="pTs">–</div><div class="l">上次巡檢</div></div>
+  </section>
+  <div class="grid2">
+    <div class="box"><h3>電腦巡檢發現</h3><div id="pFind"><div class="ph">讀取中…</div></div></div>
+    <div class="box"><h3>連線最多的行程</h3><div class="topList" id="pConn"><div class="ph">讀取中…</div></div></div>
+  </div>
+  <div class="grid2" style="margin-top:16px">
+    <div class="box"><h3>分工</h3>
+      <p><b>電腦本身的防線</b>（防火牆、Defender、排程、Proxy…）由電腦資安巡檢（OhmSecGuard）負責，這裡只讀它的報告、合進總分，不改任何電腦或網路設定。</p>
+      <div style="margin-top:12px" id="pcLinkBox"></div>
+    </div>
+    <div class="box"><h3>說明</h3><ul>
+      <li>資料來源：config 的 <b>secguard_report</b>（OhmSecGuard 的 report.json）。</li>
+      <li>讀不到時：多半是沒設定這個路徑，或電腦巡檢還沒跑過。</li>
+    </ul></div>
+  </div>
+  </div>
 </main>
 
 <div class="dr" id="dr"><div class="bk" onclick="closeDr()"></div><div class="pn">
@@ -382,16 +434,13 @@ td.dim{color:var(--dim2)}
 <div id="toast"></div>
 
 <script>
-/* ===== 設定 Config ===== */
-const OGS_CONFIG={
-  visitLog:'visits.jsonl',           // JSON Lines 訪客紀錄（ip_intel.py 讀同一份）
-  ipNotes:'ip_notes.json',          // ip_intel.py 輸出
-  vulnReport:'vuln_watch.json',     // vuln_watch.py 輸出
-  blocklist:'blocked_ips.json',     // 封鎖清單（GET 讀取）
-  blockApi:null,                    // 選填：POST {ip,note} 封鎖的 API，例 '/api/block'；null＝頁面只讀
-  unblockApi:null,                  // 選填：POST {ip} 解封的 API
-  selfUa:/ohm-health|uptime-kuma|UptimeRobot/i   // 你的監控 UA
-};
+/* ===== API（視窗程式與 OSCLAW 同一套：/api/shield/*）===== */
+const SHIELD_API='/api/shield/';
+let SHIELD_TOKEN='';
+try{ const m=location.hash.match(/[#&]t=([\w-]+)/); if(m){ SHIELD_TOKEN=m[1]; sessionStorage.setItem('shield_t',m[1]); history.replaceState(null,'',location.pathname+location.search); } else SHIELD_TOKEN=sessionStorage.getItem('shield_t')||''; }catch(e){}
+const H=()=>SHIELD_TOKEN?{'X-Shield-Token':SHIELD_TOKEN}:{};
+const sGet=(p,type)=>fetch(SHIELD_API+p+(p.includes('?')?'&':'?')+'_='+Date.now(),{cache:'no-store',headers:H(),credentials:'same-origin'}).then(r=>{if(!r.ok)throw new Error(p+' '+r.status);return type==='text'?r.text():r.json();});
+let UIC={owner:'站長',links:{}};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const toast=m=>{const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),2200);};
@@ -399,7 +448,7 @@ function setTheme(t){document.documentElement.dataset.theme=t;try{localStorage.s
 function toggleTheme(){setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');}
 (function(){let s=null;try{s=localStorage.getItem('ohm_page_theme');}catch(e){} setTheme(s||'dark');})();
 
-const SELF_UA=OGS_CONFIG.selfUa;
+const SELF_UA=/ohm-health|ohm-external-monitor|ohm-cf-guard|uptime-kuma|UptimeRobot/i;
 const BOT_UA=/bot|spider|crawl|facebookexternalhit|line-poker|slurp|curl|wget|python|go-http|httpclient|okhttp|java\/|scanner|zgrab|masscan|nmap|headless|embedly|discord|telegram|whatsapp|skypeuripreview/i;
 const SYS_P=/\/api\/|\.log(\?|$)/i;
 const SCAN_P=/\.env|wp-|wordpress|phpmyadmin|\.git\b|\.git\/|\.php\b|cgi-bin|xmlrpc|\/\.aws|\/\.ssh|boaform|\/shell|\/HNAP1|\.asp\b|\/vendor\/|\/actuator|\/solr|\/console\b|\.\.\//i;
@@ -426,7 +475,7 @@ const whoCell=ip=>{const n=NOTE[ip]; if(!n) return '<span class="dim" style="col
 const ipSub=ip=>{const n=NOTE[ip]; return n?'<span class="ipSub" title="'+esc(n.label)+'">'+esc(n.label)+'</span>':'';};
 function renderIntel(){
   const m=NMETA||{}; const el=$('intel');
-  if(!m.last_run){ $('iTxt').textContent='尚未巡檢（排程每小時跑 ip_intel.py run）'; el.classList.add('stale'); $('iKinds').innerHTML=''; return; }
+  if(!m.last_run){ $('iTxt').textContent='尚未巡檢（排程每小時跑 core/ip_intel.py run）'; el.classList.add('stale'); $('iKinds').innerHTML=''; return; }
   const age=(Date.now()-new Date(m.last_run.replace(' ','T')).getTime())/3600e3;
   el.classList.toggle('stale',age>2);
   $('iTxt').innerHTML='v'+esc(m.version)+' · 上次自動巡檢 '+esc(m.last_run.slice(5,16))+' · 已辨識 <b>'+(m.total||0)+'</b> 個 IP'+(m.auto_blocked_last_run&&m.auto_blocked_last_run.length?' · 本輪自動封鎖 <b style="color:var(--bad)">'+m.auto_blocked_last_run.length+'</b>':'');
@@ -439,9 +488,9 @@ function ago(ms){const s=(Date.now()-ms)/1000; if(s<60)return '剛剛'; if(s<360
 async function loadAll(manual){
   try{
     const [lg,bl]=await Promise.all([
-      fetch(OGS_CONFIG.visitLog+'?_='+Date.now(),{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('log '+r.status);return r.text();}),
-      fetch(OGS_CONFIG.blocklist+'?_='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():{}).catch(()=>({})),
-      fetch(OGS_CONFIG.ipNotes+'?_='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():{}).catch(()=>({}))
+      sGet('visits','text'),
+      sGet('blocklist').catch(()=>({})),
+      sGet('notes').catch(()=>({}))
     ]).then(a=>{ const n=a[2]||{}; NOTE=n.ips||{}; NMETA=n._meta||{}; return a; });
     BL=bl||{};
     if(lg.length!==lastSize||manual){
@@ -568,19 +617,18 @@ function renderTop(hu){
 /* 封鎖操作 */
 const IP_RE=/^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}$|^[0-9a-f:]{3,39}$/i;
 async function api(path,body){
-  if(!path) throw new Error('未設定 blockApi（頁面唯讀）：請把 IP 加進封鎖檔，或設定 OGS_CONFIG.blockApi');
-  const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-  if(!r.ok) throw new Error(r.status===404?'未認證':'HTTP '+r.status);
+  const r=await fetch(SHIELD_API+path,{method:'POST',headers:Object.assign({'Content-Type':'application/json'},H()),credentials:'same-origin',body:JSON.stringify(body)});
+  if(!r.ok) throw new Error(r.status===404?'未認證（請登入後再操作）':'HTTP '+r.status);
   const j=await r.json().catch(()=>({ok:true})); if(j.ok===false) throw new Error(j.error||'失敗'); return j;
 }
 async function doBlock(ip,note,silent){
   if(SELF_IPS.has(ip)){ toast('這是自家監控 IP，不能封鎖（會把自己鎖在門外）'); return false; }
   if(!silent&&!confirm('確定封鎖 '+ip+'？之後這個 IP 連任何對外網址一律 404。')) return false;
-  try{ await api(OGS_CONFIG.blockApi,{ip,note:note||'手動封鎖'}); BL[ip]={blocked_at:new Date().toLocaleString('sv-SE'),reason:'manual',note}; if(!silent){toast('已封鎖 '+ip); renderAll();} return true; }
+  try{ await api('block',{ip,note:note||'手動封鎖'}); BL[ip]={blocked_at:new Date().toLocaleString('sv-SE'),reason:'manual',note}; if(!silent){toast('已封鎖 '+ip); renderAll();} return true; }
   catch(e){ toast('封鎖失敗：'+e.message); return false; }
 }
 async function doUnblock(ip){
-  try{ await api(OGS_CONFIG.unblockApi,{ip}); delete BL[ip]; toast('已解封 '+ip); renderAll(); if($('dr').classList.contains('on')) openDr(ip); }
+  try{ await api('unblock',{ip}); delete BL[ip]; toast('已解封 '+ip); renderAll(); if($('dr').classList.contains('on')) openDr(ip); }
   catch(e){ toast('解封失敗：'+e.message); }
 }
 async function bulkBlock(){
@@ -639,8 +687,8 @@ let VW=null, vSev='exp';
 const SEVN={CRITICAL:'嚴重',HIGH:'高',MODERATE:'中',MEDIUM:'中',LOW:'低',UNKNOWN:'未分級','':'未分級'};
 const SEVC={CRITICAL:'hi',HIGH:'hi',MODERATE:'mid',MEDIUM:'mid',LOW:'lo'};
 async function loadVuln(){
-  try{ const r=await fetch(OGS_CONFIG.vulnReport+'?_='+Date.now(),{cache:'no-store'}); if(!r.ok) throw new Error('HTTP '+r.status); VW=await r.json(); renderVuln(); }
-  catch(e){ $('vTxt').textContent='尚無資料（排程每天跑 vuln_watch.py run --patch）'; $('vIntel').classList.add('stale'); $('vBody').innerHTML='<tr><td colspan="7" class="ph">讀不到 _vuln_watch.json</td></tr>'; }
+  try{ VW=await sGet('vuln'); renderVuln(); }
+  catch(e){ $('vTxt').textContent='尚無資料（排程每天跑 core/vuln_watch.py run --patch）'; $('vIntel').classList.add('stale'); $('vBody').innerHTML='<tr><td colspan="7" class="ph">讀不到 _vuln_watch.json</td></tr>'; }
 }
 function renderVuln(){
   const m=VW._meta||{}, F=VW.findings||[];
@@ -671,14 +719,66 @@ function renderVuln(){
 }
 chipGroup('vSev',v=>{vSev=v;if(VW)renderVuln();});
 
+/* 電腦入侵（讀 SecGuard，只讀） */
+let pcLoaded=false;
+async function loadPc(){
+  try{
+    const j=await sGet('secguard'); if(!j.ok||!j.report) throw new Error(j.error||'沒有電腦資安報告'); const d=j.report||{}; const raw=d.raw||{};
+    pcLoaded=true;
+    $('pScore').textContent=d.score!=null?d.score:'–';
+    const fw=raw.firewall||{}; const on=Object.values(fw).filter(Boolean).length, tot=Object.keys(fw).length;
+    $('pFw').innerHTML=tot?(on===tot?'<span style="color:var(--ok)">全開</span>':on?'<span style="color:var(--warn)">'+on+'/'+tot+' 開</span>':'<span style="color:var(--warn)">關閉</span>'):'–';
+    $('pRdp').innerHTML=raw.rdp_deny===1?'<span style="color:var(--ok)">已停用</span>':raw.rdp_deny===0?'<span style="color:var(--bad)">開放中</span>':'–';
+    const df=raw.defender||{}; $('pDef').innerHTML=df.rtp?'<span style="color:var(--ok)">開啟</span>':'<span style="color:var(--bad)">關閉</span>';
+    $('pTs').textContent=(d.ts||'–').slice(5,16);
+    const lvT={alert:'hi',warn:'mid',info:'lo'}, lvN={alert:'警報',warn:'注意',info:'資訊'};
+    const f=d.findings||[];
+    $('pFind').innerHTML=f.length?f.map(x=>'<div class="find"><div class="h"><span class="tag '+(lvT[x.level]||'lo')+'">'+(lvN[x.level]||esc(x.level))+'</span>'+esc(x.title)+'</div><p>'+esc(x.detail||'')+'</p></div>').join(''):'<div class="ph">沒有發現問題 ✓</div>';
+    const ct=raw.conn_top||[];
+    $('pConn').innerHTML=(Array.isArray(ct)&&ct.length)?ct.map(c=>'<div class="r"><span>'+esc(c.name||c.Name||c.proc||c.pid||'?')+'</span><span>'+esc(c.count||c.Count||c.n||'')+'</span></div>').join(''):'<div class="ph">無資料</div>';
+  }catch(e){
+    $('pFind').innerHTML='<div class="ph">讀不到 SecGuard：'+esc(e.message||e)+'</div>'; $('pConn').innerHTML='<div class="ph">—</div>';
+  }
+}
 $('mode').querySelectorAll('button').forEach(b=>b.onclick=()=>{
   $('mode').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
-  const m=b.dataset.m; $('m-web').style.display=m==='web'?'':'none'; $('m-vuln').style.display=m==='vuln'?'':'none';
+  const m=b.dataset.m; $('m-web').style.display=m==='web'?'':'none'; $('m-pc').style.display=m==='pc'?'':'none'; $('m-vuln').style.display=m==='vuln'?'':'none';
   $('rng').style.visibility=m==='web'?'':'hidden';
+  if(m==='pc'&&!pcLoaded) loadPc();
   if(m==='vuln'&&!VW) loadVuln();
   try{history.replaceState(null,'','#'+m);}catch(e){}
 });
-if(/^#(vuln)$/.test(location.hash)) setTimeout(()=>document.querySelector('#mode [data-m='+location.hash.slice(1)+']').click(),0);
+if(/^#(pc|vuln)$/.test(location.hash)) setTimeout(()=>document.querySelector('#mode [data-m='+location.hash.slice(1)+']').click(),0);
+
+/* ===== 總狀態＋巡檢按鈕 ===== */
+const LAMP={green:['正常','var(--ok)'],yellow:['注意','var(--warn)'],red:['警報','var(--bad)']};
+const LN={web:'門牌',vuln:'漏洞',pc:'電腦'};
+async function loadStatus(){
+  try{
+    const st=await sGet('status');
+    const L=LAMP[st.level]||LAMP.yellow;
+    $('sRing').style.setProperty('--p',st.score); $('sRing').style.setProperty('--rc',L[1]);
+    $('sScore').textContent=st.score; $('sLamp').innerHTML='<span style="color:'+L[1]+'">●</span> '+L[0];
+    const ls=st.lines||{}; $('sMeta').textContent=Object.keys(ls).map(k=>LN[k]+' '+(ls[k].score==null?'–':ls[k].score)).join(' · ')+' · '+(st.ts||'').slice(5,16);
+    const T=st.todo||[]; $('sTodo').innerHTML=T.length?T.slice(0,4).map(t=>'<div title="'+esc(t.text)+'"><span class="tag '+(t.level==='alert'?'hi':t.level==='warn'?'mid':'lo')+'">'+(LN[t.line]||'')+'</span> '+esc(t.text)+'</div>').join(''):'<div><span class="tag self">安全</span> 沒有待處理事項</div>';
+    if(st.ui){ UIC=Object.assign(UIC,st.ui); INK.boss=UIC.owner||'站長';
+      const pl=(UIC.links||{}).secguard; if(pl&&$('pcLinkBox')) $('pcLinkBox').innerHTML='<a class="btn" href="'+esc(pl)+'" target="_blank" rel="noopener">開電腦資安中心 ↗</a>'; }
+  }catch(e){ $('sLamp').textContent='讀不到總狀態'; $('sMeta').textContent=String(e.message||e); }
+}
+async function loadJobs(){
+  try{ const j=await sGet('jobs'); const run=[j.ip_intel?'門牌巡檢中…':'', j.vuln_watch?'漏洞巡檢／修補中…':''].filter(Boolean).join('　'); $('sJobs').textContent=run;
+    document.querySelectorAll('[data-scan]').forEach(b=>b.disabled=(b.dataset.scan==='ip'?j.ip_intel:j.vuln_watch)); return j; }catch(e){ return {}; }
+}
+document.querySelectorAll('[data-scan]').forEach(b=>b.onclick=async()=>{
+  const t=b.dataset.scan; if(t==='patch'&&!confirm('執行漏洞巡檢＋安全自動修補？\n（只動對外服務的 Python、一次一個、修前備份、有衝突自動退回）')) return;
+  try{ const r=await fetch(SHIELD_API+(t==='patch'?'patch':'scan'),{method:'POST',headers:Object.assign({'Content-Type':'application/json'},H()),credentials:'same-origin',body:JSON.stringify({target:t})}); const j=await r.json();
+    if(!j.ok) throw new Error(j.error||r.status); toast(j.busy?'已經在跑了':'已開始'+({ip:'門牌巡檢',vuln:'漏洞巡檢',patch:'巡檢＋修補'}[t])); }
+  catch(e){ toast('啟動失敗：'+e.message); }
+  setTimeout(loadJobs,800);
+});
+let wasBusy=false;
+setInterval(async()=>{ if(document.hidden) return; const j=await loadJobs(); const busy=!!(j.ip_intel||j.vuln_watch); if(wasBusy&&!busy){ loadAll(true); loadStatus(); VW=null; if($('m-vuln').style.display!=='none') loadVuln(); } wasBusy=busy; },8000);
+loadStatus(); loadJobs(); setInterval(()=>{ if(!document.hidden) loadStatus(); },60000);
 
 /* 輪詢：只在分頁可見時每 60 秒更新 */
 function startPoll(){ clearInterval(timer); timer=setInterval(()=>{ if(!document.hidden) loadAll(false); },60000); }

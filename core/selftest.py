@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""OhmGateShield 自我測試：不連網、不寫檔，只驗判定邏輯。用法：python selftest.py"""
+"""OhmShield 自我測試：不連網、不寫檔，只驗判定邏輯。用法：python core/selftest.py"""
 import importlib.util, collections, os, sys
 spec = importlib.util.spec_from_file_location("m", os.path.join(os.path.dirname(os.path.abspath(__file__)), "ip_intel.py"))
 m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)

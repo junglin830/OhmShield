@@ -1,8 +1,22 @@
 # Changelog
 
-All notable changes to OhmGateShield. 版本規則：MVP = 1.0.0；小修改升最後碼、局部功能升中間碼、大改版升第一碼。
+All notable changes to OhmShield（前身 OhmGateShield）. 版本規則：MVP = 1.0.0；小修改升最後碼、局部功能升中間碼、大改版升第一碼。
 
-## [1.0.0] — 2026-10-22 · 首次開源 First public release
+## [OhmShield 1.0.0] — 2026-10-22 · 升級成完整資安中心
+
+### Added
+- **One score, three lines**: `core/shield_status.py` merges 網頁門牌 / 漏洞情報 / 電腦 (OhmSecGuard report, optional) into a total score, traffic light (green / yellow / red) and a prioritised to-do list → `shield_status.json`.
+- **One API**: `core/shield_api.py` — the only implementation of `/api/shield/*` (ui, status, visits[?tail=N], notes, blocklist, vuln, secguard, jobs, block, unblock, scan, patch). Every entry point forwards to it, so behaviour and data are always identical.
+- **One UI page**: `ui/shield.html` — adds the total-score banner, to-do list, scan / patch buttons with job polling, and the 電腦 tab; all data through the API (token header supported).
+- **Desktop app** `app/ohmshield_app.py` → `OhmShield.exe`: pywebview window + tray shield coloured by status, token-protected 127.0.0.1 server with Origin check, single instance, close-to-tray, works without any web server. `app/build.ps1` builds it in an isolated venv.
+- **File locks** (`core/shield_common.py`): engines, block / unblock and patch never run over each other, whichever entry point triggered them; stale locks auto-expire.
+- `ip_intel.py` 1.1.0: `block` / `unblock` CLI, `owner_label`, blocklist merge-on-write under lock (manual blocks made during a run are kept).
+- `vuln_watch.py` 1.3.0: run-level lock, `vuln_cache`, `vuln_backup_dir`, `scan_skip_regex`; status refresh after every run.
+
+### Changed
+- Repository renamed OhmGateShield → **OhmShield**（GitHub 會自動轉址）. Engines moved to `core/`; `dashboard.html` replaced by `ui/shield.html`.
+
+## [OhmGateShield 1.0.0] — 2026-10-22 · 首次開源 First public release
 
 ### IP Intel `ip_intel.py` v1.0.3
 - Added: identifies **every** visitor IP from PTR + RDAP + behaviour and writes a human-readable note with evidence (`ip_notes.json`).

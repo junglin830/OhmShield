@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-OhmGateShield · IP Intel — 自架網站的「訪客 IP 身分辨識＋惡意掃描自動封鎖」引擎
+OhmShield · IP Intel — 自架網站的「訪客 IP 身分辨識＋惡意掃描自動封鎖」引擎
 Identify every IP that hits your self-hosted web server, write a human-readable note for
 each one, and auto-block vulnerability scanners.
 
@@ -9,6 +9,7 @@ each one, and auto-block vulnerability scanners.
   python ip_intel.py recheck [--max N]   # re-lookup every IP
   python ip_intel.py recheck-empty       # re-lookup IPs whose network owner is still unknown
   python ip_intel.py show <ip>
+  python ip_intel.py block <ip> [備註] | unblock <ip>
 
 Config: config.json next to this file (see config.example.json) or env OGS_CONFIG=<path>.
 Input log: JSON Lines (one object per request: {"t":"MM-DD HH:MM:SS","ip","cty","p","q","ref","ua"})
@@ -18,29 +19,21 @@ Standard library only. MIT License.
 """
 import sys, os, json, re, time, socket, ipaddress, datetime, urllib.request, urllib.error, collections, threading
 
-VERSION = "1.0.3"
+VERSION = "1.1.0"
 HERE = os.path.dirname(os.path.abspath(__file__))
-CFG = {}
-_CFG_PATH = os.environ.get("OGS_CONFIG") or os.path.join(HERE, "config.json")
-try:
-    with open(_CFG_PATH, encoding="utf-8") as _f:
-        CFG = json.load(_f)
-except Exception:
-    pass
-_CFG_DIR = os.path.dirname(os.path.abspath(_CFG_PATH))
-for _k in ("visit_log", "blocklist", "ip_notes", "engine_log", "vuln_report", "scan_root"):
-    if isinstance(CFG.get(_k), str) and CFG[_k] and not os.path.isabs(CFG[_k]):
-        CFG[_k] = os.path.join(_CFG_DIR, CFG[_k])   # 相對路徑以 config.json 所在資料夾為準
-VISITLOG = CFG.get("visit_log", os.path.join(_CFG_DIR, "visits.jsonl"))
+sys.path.insert(0, HERE)
+from shield_common import CFG, Lock, block_ip, unblock_ip, valid_ip   # 設定、鎖、封鎖清單（兩個入口共用）
+VISITLOG = CFG["visit_log"]
 LOG_FORMAT = CFG.get("log_format", "jsonl")          # jsonl | combined
-BLOCKLIST = CFG.get("blocklist", os.path.join(_CFG_DIR, "blocked_ips.json"))
-NOTES = CFG.get("ip_notes", os.path.join(_CFG_DIR, "ip_notes.json"))
-LOG = CFG.get("engine_log", os.path.join(_CFG_DIR, "ip_intel.log"))
+BLOCKLIST = CFG["blocklist"]
+NOTES = CFG["ip_notes"]
+LOG = CFG.get("engine_log") or os.path.join(CFG["_dir"], "ip_intel.log")
 AUTO_BLOCK = CFG.get("auto_block", True)
+OWNER = CFG.get("owner_label", "站長")
 RECHECK_DAYS = int(CFG.get("recheck_days", 7))
 MAX_LOOKUPS = int(CFG.get("max_lookups", 80))
 RECHECK_EMPTY = False
-UA = "OhmGateShield-IpIntel/1.0 (+https://github.com/junglin830/OhmGateShield)"
+UA = "OhmShield-IpIntel/1.1 (+https://github.com/junglin830/OhmShield)"
 _SELF = CFG.get("self_ua_markers", ["ohm-health", "uptime-kuma", "UptimeRobot"])     # 你自己的監控 UA：其 IP 視為自家、永不封
 _ADMIN = CFG.get("owner_paths_regex", r"^/admin\b|^/dashboard\b|^/api/(blocklist|block|unblock)")  # 只有站長能開的路徑
 COUNTRY_HOME = CFG.get("home_country", "TW")
@@ -386,8 +379,8 @@ def classify(ip, s, net, self_ips):
     if s["admin"] >= 2 and REAL_BROWSER.search(ua) and (s["cty"] == COUNTRY_HOME or tw_isp):
         dev = "iPhone" if "iPhone" in ua else "iPad" if "iPad" in ua else "Android 手機" if "Android" in ua else "Mac" if "Macintosh" in ua else "Windows 電腦" if "Windows" in ua else "裝置"
         inapp = "（LINE 內建瀏覽器）" if re.search(r"\bLine/", ua) else ""
-        return out("boss", "站長的%s%s（推定）" % (dev, inapp), "中",
-                   "用真瀏覽器%s打開過站長專屬頁 %d 次；陌生人進不去這些頁面，推定是站長自己。" % ("（" + tw_isp + "）" if tw_isp else "", s["admin"]))
+        return out("boss", "%s的%s%s（推定）" % (OWNER, dev, inapp), "中",
+                   "用真瀏覽器%s打開過%s專屬頁 %d 次；陌生人進不去這些頁面，推定是%s自己。" % ("（" + tw_isp + "）" if tw_isp else "", OWNER, s["admin"], OWNER))
 
     # 惡意掃描
     if scan_n or is_scanner_ua:
@@ -496,7 +489,12 @@ def run(dry=False, recheck=False, max_lookups=None):
         print(json.dumps(meta, ensure_ascii=False))
         return
     if blocked:
-        save_json(BLOCKLIST, bl)
+        with Lock("blocklist", timeout=10, stale=60):
+            cur = load_json(BLOCKLIST, {})          # 重讀：期間可能有人從視窗／OSCLAW 封鎖或解封
+            for ip in blocked:
+                if ip not in cur:
+                    cur[ip] = bl[ip]
+            save_json(BLOCKLIST, cur)
     save_json(NOTES, out)
     log("run v%s：%d IP，反查 %d，新備註 %d，自動封鎖 %d %s，%.1fs" % (VERSION, len(ips), looked, added, len(blocked), blocked[:5], time.time() - t0))
 
@@ -504,18 +502,38 @@ def run(dry=False, recheck=False, max_lookups=None):
 def main():
     a = sys.argv[1:] or ["run"]
     mx = int(a[a.index("--max") + 1]) if "--max" in a else None
-    if a[0] == "run":
-        run(dry="--dry" in a, max_lookups=mx)
-    elif a[0] == "recheck":
-        run(recheck=True, max_lookups=mx)
-    elif a[0] == "recheck-empty":   # 只重查還沒拿到網段擁有者的 IP
-        global RECHECK_EMPTY
-        RECHECK_EMPTY = True
-        run(max_lookups=mx or 400)
-    elif a[0] == "show" and len(a) > 1:
+    if a[0] in ("block", "unblock") and len(a) > 1:
+        (block_ip(a[1], "manual", " ".join(a[2:])) if a[0] == "block" else unblock_ip(a[1]))
+        print("ok")
+        return
+    if a[0] == "show" and len(a) > 1:
         print(json.dumps(load_json(NOTES, {}).get("ips", {}).get(a[1]), ensure_ascii=False, indent=1))
-    else:
+        return
+    if a[0] not in ("run", "recheck", "recheck-empty"):
         print(__doc__)
+        return
+    lk = Lock("ip_intel", timeout=0, stale=1800)
+    if not lk.acquire():
+        log("另一輪 IP 巡檢還在跑，這次略過")
+        print("busy")
+        return
+    try:
+        if a[0] == "run":
+            run(dry="--dry" in a, max_lookups=mx)
+        elif a[0] == "recheck":
+            run(recheck=True, max_lookups=mx)
+        else:
+            global RECHECK_EMPTY
+            RECHECK_EMPTY = True
+            run(max_lookups=mx or 400)
+    finally:
+        lk.release()
+    if "--dry" not in a:
+        try:
+            import shield_status
+            shield_status.build()
+        except Exception as e:
+            log("總狀態更新失敗：%r" % e)
 
 
 if __name__ == "__main__":

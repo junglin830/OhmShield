@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-OhmGateShield · Vuln Watch — 「我們實際在跑的軟體，有沒有中已知漏洞？」每天自動回答，並在安全範圍內自動修補。
+OhmShield · Vuln Watch — 「我們實際在跑的軟體，有沒有中已知漏洞？」每天自動回答，並在安全範圍內自動修補。
 Daily answer to "is anything we actually run affected by a known vulnerability?" — plus safe auto-patching.
 
   1. Inventory: pip packages of the exposed Python (+ other interpreters / .venv under scan_root),
@@ -21,31 +21,22 @@ Standard library only. MIT License.
 """
 import sys, os, re, json, glob, time, datetime, subprocess, urllib.request, collections
 
-VERSION = "1.2.1"
+VERSION = "1.3.0"
 HERE = os.path.dirname(os.path.abspath(__file__))
-CFG = {}
-_CFG_PATH = os.environ.get("OGS_CONFIG") or os.path.join(HERE, "config.json")
-try:
-    with open(_CFG_PATH, encoding="utf-8") as _f:
-        CFG = json.load(_f)
-except Exception:
-    pass
-_CFG_DIR = os.path.dirname(os.path.abspath(_CFG_PATH))
-
-
-def _abs(p):
-    return p if not p or os.path.isabs(p) else os.path.join(_CFG_DIR, p)
-
-
-ROOT = _abs(CFG.get("scan_root", ""))                              # where to look for .venv / package-lock.json ("" = skip)
-OUT = _abs(CFG.get("vuln_report", "vuln_watch.json"))
-LOG = _abs(CFG.get("vuln_log", "vuln_watch.log"))
-CACHE = os.path.join(os.path.dirname(OUT), "vuln_watch_cache.json")
+sys.path.insert(0, HERE)
+from shield_common import CFG, Lock   # 設定與鎖（兩個入口共用）
+_abs = lambda p: p
+ROOT = CFG.get("scan_root", "")                                    # 掃 .venv / package-lock.json 的根目錄（空＝不掃）
+OUT = CFG["vuln_report"]
+LOG = CFG.get("vuln_log") or os.path.join(CFG["_dir"], "vuln_watch.log")
+CACHE = CFG.get("vuln_cache") or os.path.join(os.path.dirname(OUT), "vuln_watch_cache.json")
 SYS_PY = CFG.get("exposed_python", sys.executable)                 # interpreter running your public services (auto-patched)
 EXTRA_PY = CFG.get("other_pythons", [])                            # other interpreters to report on (never patched)
-UA = "OhmGateShield-VulnWatch/1.2 (+https://github.com/junglin830/OhmGateShield)"
+UA = "OhmShield-VulnWatch/1.3 (+https://github.com/junglin830/OhmShield)"
 CREATE_NO_WINDOW = 0x08000000 if os.name == "nt" else 0
 SKIP_DIRS = re.compile(r"[\\/](node_modules|site-packages|\.git|trash|_tmp|backup[^\\/]*)([\\/]|$)", re.I)
+if CFG.get("scan_skip_regex"):   # 額外略過的大型資料夾（模型、備份…）
+    SKIP_DIRS = re.compile(SKIP_DIRS.pattern[:-len(")([\\\\/]|$)")] + "|" + CFG["scan_skip_regex"] + ")([\\\\/]|$)", re.I)
 SEV_RANK = {"CRITICAL": 4, "HIGH": 3, "MODERATE": 2, "MEDIUM": 2, "LOW": 1, "": 0}
 KEV_MATCH = [  # (我們的元件, CISA KEV vendorProject/product 關鍵字)
     ("Node.js", r"node\.?js"), ("Python", r"\bpython\b"), ("cloudflared", r"cloudflare"), ("Git", r"^git$|\bgit\b"),
@@ -346,7 +337,7 @@ def run(notify=True, baseline=None):
 
 
 # ---------------- 4. 自動修補（只修 exposed_python，安全範圍內） ----------------
-BACKUP_DIR = os.path.join(os.path.dirname(OUT), "vuln_watch_backup")
+BACKUP_DIR = CFG.get("vuln_backup_dir") or os.path.join(os.path.dirname(OUT), "vuln_watch_backup")
 PATCH_HOLD = {"pip", "setuptools", "torch", "torchvision", "torchaudio", "numpy", "transformers", "diffusers", "gradio", "gradio-client", "fastapi", "starlette", "pydantic", "pydantic-core"}  # 牽動太大：只列出，不自動
 
 
@@ -478,20 +469,35 @@ def _restore(py, snap):
 
 def main():
     a = sys.argv[1:] or ["run"]
-    if a[0] == "run":
-        if "--patch" in a:
-            before = load(OUT, {})
-            run(notify=False)
-            patch()
-            run(notify="--no-notify" not in a, baseline=before)   # 修完重掃；只通知修不掉的新嚴重漏洞
-        else:
-            run(notify="--no-notify" not in a)
-    elif a[0] == "patch":
-        patch(dry="--dry" in a)
-    elif a[0] == "show":
+    if a[0] == "show":
         print(json.dumps(load(OUT, {}).get("_meta"), ensure_ascii=False, indent=1))
-    else:
+        return
+    if a[0] not in ("run", "patch"):
         print(__doc__)
+        return
+    lk = Lock("vuln_watch", timeout=0, stale=3 * 3600)
+    if not lk.acquire():
+        log("另一輪漏洞巡檢／修補還在跑，這次略過")
+        print("busy")
+        return
+    try:
+        if a[0] == "run":
+            if "--patch" in a:
+                before = load(OUT, {})
+                run(notify=False)
+                patch()
+                run(notify="--no-notify" not in a, baseline=before)   # 修完重掃；只通知修不掉的新嚴重漏洞
+            else:
+                run(notify="--no-notify" not in a)
+        else:
+            patch(dry="--dry" in a)
+    finally:
+        lk.release()
+    try:
+        import shield_status
+        shield_status.build()
+    except Exception as e:
+        log("總狀態更新失敗：%r" % e)
 
 
 if __name__ == "__main__":
