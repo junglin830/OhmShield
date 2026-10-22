@@ -1,0 +1,21 @@
+{
+  "_doc": "複製成 config.json 再改。相對路徑以本檔所在資料夾為準。 Copy to config.json; relative paths are resolved from this file's folder.",
+  "visit_log": "visits.jsonl",
+  "log_format": "jsonl",
+  "blocklist": "blocked_ips.json",
+  "ip_notes": "ip_notes.json",
+  "engine_log": "ip_intel.log",
+  "auto_block": true,
+  "self_ua_markers": ["my-health-check", "uptime-kuma", "UptimeRobot"],
+  "owner_paths_regex": "^/admin\\b|^/dashboard\\b",
+  "home_country": "TW",
+  "max_lookups": 80,
+  "recheck_days": 7,
+
+  "vuln_report": "vuln_watch.json",
+  "vuln_log": "vuln_watch.log",
+  "exposed_python": "C:\\Python312\\python.exe",
+  "other_pythons": [],
+  "scan_root": "D:\\my-projects",
+  "notify_command": null
+}

@@ -1,0 +1,10 @@
+config.json
+*.log
+ip_notes.json
+vuln_watch.json
+vuln_watch_cache.json
+vuln_watch_backup/
+blocked_ips.json
+__pycache__/
+*.tmp
+push.bat

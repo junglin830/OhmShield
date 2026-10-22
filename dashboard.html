@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<!-- OhmGateShield dashboard — MIT License · https://github.com/junglin830/OhmGateShield
+     Edit OGS_CONFIG below to point at your files / endpoints. Serve this file from the same origin as the JSON files. -->
+<html lang="zh-Hant" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="application-version" content="1.3.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>OhmGateShield</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2330d158' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z'/%3E%3Cpath d='m9 12 2 2 4-4'/%3E%3C/svg%3E">
+<style>
+:root{
+  --r-lg:20px; --r-md:14px; --r-sm:10px; --r-pill:980px;
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue","Noto Sans TC","Microsoft JhengHei",sans-serif;
+  --mono:"SF Mono",ui-monospace,Consolas,monospace;
+  --ok:#30d158; --warn:#ffd60a; --bad:#ff453a; --blue:#0a84ff; --ease:cubic-bezier(.28,.11,.32,1);
+}
+[data-theme=dark]{
+  --bg:#07080b; --card:rgba(255,255,255,.035); --card-solid:#121318; --card-h:rgba(255,255,255,.06);
+  --line:rgba(255,255,255,.09); --line2:rgba(255,255,255,.05);
+  --txt:#f5f5f7; --dim:#a1a1ab; --dim2:#6a6a74; --acc:#30d158; --acc2:#7ee2a0;
+  --tint:rgba(48,209,88,.10); --tint2:rgba(48,209,88,.24);
+  --nav-bg:rgba(8,9,12,.7); --shadow:0 24px 60px rgba(0,0,0,.55);
+}
+[data-theme=light]{
+  --bg:#f5f5f7; --card:rgba(255,255,255,.85); --card-solid:#fff; --card-h:#fff;
+  --line:rgba(0,0,0,.08); --line2:rgba(0,0,0,.05);
+  --txt:#1d1d1f; --dim:#5b5b61; --dim2:#8e8e93; --acc:#1f9d48; --acc2:#1f9d48;
+  --tint:rgba(31,157,72,.08); --tint2:rgba(31,157,72,.2);
+  --nav-bg:rgba(250,250,252,.75); --shadow:0 24px 60px rgba(0,0,0,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--txt);font-family:var(--font);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden;
+  background-image:radial-gradient(900px 420px at 15% -8%,rgba(48,209,88,.10),transparent 60%),radial-gradient(700px 380px at 95% 0%,rgba(10,132,255,.08),transparent 60%);background-attachment:scroll}
+a{color:inherit;text-decoration:none}
+button,input,select{font-family:inherit}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:8px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+
+nav{position:sticky;top:0;z-index:40;height:58px;background:var(--nav-bg);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--line2)}
+.navIn{max-width:1240px;margin:0 auto;height:100%;display:flex;align-items:center;gap:12px;padding:0 24px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px;white-space:nowrap}
+.brand .sh{width:28px;height:28px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,rgba(48,209,88,.35),rgba(10,132,255,.2));border:1px solid rgba(48,209,88,.4)}
+.brand .sh svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.brand small{display:block;font-size:10px;letter-spacing:.16em;color:var(--dim2);font-weight:650;line-height:1}
+.sp{flex:1}
+.live{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--dim)}
+.live i{width:7px;height:7px;border-radius:50%;background:var(--ok);animation:pl 2s infinite}
+.live.off i{background:var(--dim2);animation:none}
+@keyframes pl{50%{opacity:.35}}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;padding:0 13px;border-radius:var(--r-pill);font-size:12.5px;font-weight:600;cursor:pointer;
+  border:1px solid var(--line);background:transparent;color:var(--dim);transition:.2s var(--ease);white-space:nowrap}
+.btn:hover{color:var(--txt);border-color:var(--dim2)}
+.btn.pri{background:var(--txt);color:var(--bg);border-color:transparent}
+.btn.pri:hover{opacity:.86}
+.btn.red{color:var(--bad);border-color:rgba(255,69,58,.45);background:rgba(255,69,58,.08)}
+.btn.red:hover{background:rgba(255,69,58,.16);color:var(--bad)}
+.btn.grn{color:var(--ok);border-color:rgba(48,209,88,.45);background:rgba(48,209,88,.08)}
+.btn.sm{height:26px;padding:0 10px;font-size:11.5px}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.tSwitch{position:relative;width:56px;height:28px;border-radius:var(--r-pill);cursor:pointer;flex:none;background:var(--card);border:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 7px;user-select:none;font-size:11px}
+.tKnob{position:absolute;top:2px;left:30px;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#30d158,#0a84ff);transition:left .3s var(--ease)}
+[data-theme=light] .tKnob{left:2px}
+
+.wrap{max-width:1240px;margin:0 auto;padding:30px 24px 70px}
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+.head .k{font-size:11px;font-weight:700;letter-spacing:.2em;color:var(--dim2)}
+.head h1{font-size:clamp(26px,4vw,38px);font-weight:800;letter-spacing:-.03em;line-height:1.15;margin-top:4px}
+.head p{color:var(--dim);font-size:13px;margin-top:6px;max-width:640px}
+.rng{display:flex;gap:4px;padding:4px;border-radius:var(--r-pill);border:1px solid var(--line);background:var(--card)}
+.rng button{border:none;background:transparent;color:var(--dim);font-size:12px;font-weight:600;padding:6px 12px;border-radius:var(--r-pill);cursor:pointer}
+.rng button.on{background:var(--txt);color:var(--bg)}
+
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:16px}
+.kpi{border:1px solid var(--line);background:var(--card);border-radius:var(--r-md);padding:14px 16px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.kpi .v{font-size:26px;font-weight:750;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.2}
+.kpi .l{font-size:11.5px;color:var(--dim2);margin-top:2px}
+.kpi.bad .v{color:var(--bad)} .kpi.warn .v{color:var(--warn)} .kpi.ok .v{color:var(--ok)}
+[data-theme=light] .kpi.warn .v{color:#b38600}
+
+.bar{border:1px solid var(--line);background:var(--card);border-radius:var(--r-md);padding:14px 16px;margin-bottom:16px}
+.bar .t{display:flex;justify-content:space-between;font-size:12px;color:var(--dim2);margin-bottom:10px}
+.spark{display:flex;align-items:flex-end;gap:2px;height:64px}
+.spark i{flex:1;background:linear-gradient(180deg,var(--acc),rgba(48,209,88,.25));border-radius:3px 3px 1px 1px;min-height:2px;position:relative;opacity:.85}
+.spark i:hover{opacity:1}
+.spark i.z{background:var(--line)}
+
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:14px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{border:none;background:none;color:var(--dim);font-size:13.5px;font-weight:650;padding:10px 14px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tabs button.on{color:var(--txt);border-bottom-color:var(--acc)}
+.tabs .n{font-size:11px;color:var(--dim2);margin-left:5px;font-variant-numeric:tabular-nums}
+.pane{display:none}.pane.on{display:block}
+
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.inp{height:32px;border-radius:var(--r-pill);border:1px solid var(--line);background:var(--card);color:var(--txt);padding:0 14px;font-size:12.5px;min-width:0}
+.inp:focus{outline:none;border-color:var(--tint2);box-shadow:0 0 0 4px var(--tint)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{height:28px;border-radius:var(--r-pill);border:1px solid var(--line);background:transparent;color:var(--dim);font-size:12px;font-weight:600;padding:0 11px;cursor:pointer}
+.chip.on{background:var(--tint);color:var(--acc2);border-color:var(--tint2)}
+
+.tbl{border:1px solid var(--line);background:var(--card);border-radius:var(--r-md);overflow:hidden}
+.tblIn{overflow:auto;max-height:640px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{position:sticky;top:0;z-index:1;background:var(--card-solid);text-align:left;font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--dim2);padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--line2);white-space:nowrap;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--card-h)}
+td.m{font-family:var(--mono);font-size:12px}
+td.p{max-width:340px;overflow:hidden;text-overflow:ellipsis}
+td.dim{color:var(--dim2)}
+.ipBtn{font-family:var(--mono);font-size:12px;color:var(--txt);background:none;border:none;cursor:pointer;padding:0;border-bottom:1px dashed var(--dim2)}
+.ipBtn:hover{color:var(--acc2);border-color:var(--acc2)}
+.tag{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:var(--r-pill);font-size:10.5px;font-weight:700;letter-spacing:.02em;white-space:nowrap}
+.tag.human{background:rgba(10,132,255,.13);color:#5eb0ff}
+.tag.self{background:rgba(48,209,88,.13);color:var(--ok)}
+.tag.bot{background:rgba(255,214,10,.13);color:#e8c100}
+.tag.sys{background:rgba(142,142,147,.15);color:var(--dim)}
+.tag.hi{background:rgba(255,69,58,.15);color:var(--bad)}
+.tag.mid{background:rgba(255,214,10,.15);color:#e8c100}
+.tag.lo{background:rgba(142,142,147,.12);color:var(--dim)}
+.tag.blk{background:rgba(255,69,58,.85);color:#fff}
+[data-theme=light] .tag.bot,[data-theme=light] .tag.mid{color:#8a6d00}
+.score{display:inline-flex;align-items:center;gap:8px}
+.score .b{width:46px;height:5px;border-radius:3px;background:var(--line);overflow:hidden}
+.score .b i{display:block;height:100%;border-radius:3px}
+.flags{display:flex;gap:4px;flex-wrap:wrap}
+.flag{font-size:10.5px;color:var(--dim);border:1px solid var(--line);border-radius:6px;padding:0 6px;line-height:18px}
+.ph{color:var(--dim2);text-align:center;padding:40px 0;font-size:13px}
+
+.grid2{display:grid;grid-template-columns:1.4fr 1fr;gap:16px}
+.box{border:1px solid var(--line);background:var(--card);border-radius:var(--r-md);padding:18px}
+.box h3{font-size:14px;font-weight:750;margin-bottom:12px}
+.box p,.box li{font-size:12.5px;color:var(--dim);line-height:1.7}
+.box ul{padding-left:18px}
+.box b{color:var(--txt)}
+.form{display:flex;gap:8px;flex-wrap:wrap}
+.form .inp{flex:1 1 180px}
+.blkRow{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line2);flex-wrap:wrap}
+.blkRow:last-child{border-bottom:none}
+.blkRow .ip{font-family:var(--mono);font-size:13px;font-weight:600;min-width:140px}
+.blkRow .meta{flex:1;min-width:180px;font-size:12px;color:var(--dim2)}
+.topList .r{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;padding:6px 0;border-bottom:1px solid var(--line2)}
+.topList .r:last-child{border-bottom:none}
+.topList .r span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.topList .r span:last-child{color:var(--dim2);font-variant-numeric:tabular-nums}
+
+/* 抽屜：IP 詳情 */
+.dr{position:fixed;inset:0;z-index:80;pointer-events:none}
+.dr .bk{position:absolute;inset:0;background:rgba(0,0,0,.45);opacity:0;transition:.3s var(--ease)}
+.dr .pn{position:absolute;top:0;right:0;bottom:0;width:min(520px,100%);background:var(--card-solid);border-left:1px solid var(--line);box-shadow:var(--shadow);
+  transform:translateX(102%);transition:transform .4s var(--ease);display:flex;flex-direction:column}
+.dr.on{pointer-events:auto}.dr.on .bk{opacity:1}.dr.on .pn{transform:none}
+.drH{padding:20px 22px 14px;border-bottom:1px solid var(--line)}
+.drH .ip{font-family:var(--mono);font-size:20px;font-weight:700}
+.drH .sub{font-size:12px;color:var(--dim2);margin-top:4px}
+.drB{flex:1;overflow:auto;padding:16px 22px}
+.drStats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.drStats div{border:1px solid var(--line);border-radius:12px;padding:10px}
+.drStats b{display:block;font-size:18px;font-variant-numeric:tabular-nums}
+.drStats span{font-size:11px;color:var(--dim2)}
+.hit{font-size:12px;padding:7px 0;border-bottom:1px solid var(--line2);display:grid;grid-template-columns:96px 1fr;gap:10px}
+.hit .t{color:var(--dim2);font-family:var(--mono);font-size:11.5px}
+.hit .p{overflow-wrap:anywhere}
+.hit .u{grid-column:2;font-size:11px;color:var(--dim2);overflow-wrap:anywhere}
+.drF{padding:14px 22px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end}
+
+.mode{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:18px}
+@media(max-width:700px){.mode{grid-template-columns:1fr}}
+.mode button{display:flex;align-items:center;gap:12px;text-align:left;border:1px solid var(--line);background:var(--card);color:var(--txt);border-radius:var(--r-md);padding:14px 16px;cursor:pointer;transition:.25s var(--ease)}
+.mode button:hover{border-color:var(--dim2)}
+.mode button.on{border-color:var(--tint2);background:var(--tint);box-shadow:0 0 0 4px var(--tint)}
+.mode .mi{font-size:22px}
+.mode b{display:block;font-size:14.5px}
+.mode small{display:block;font-size:11.5px;color:var(--dim2)}
+.find{padding:10px 0;border-bottom:1px solid var(--line2)}
+.find:last-child{border-bottom:none}
+.find .h{display:flex;gap:8px;align-items:center;font-size:13px;font-weight:650}
+.find p{margin-top:4px}
+@media(max-width:600px){#m-pc .kpis{grid-template-columns:repeat(2,1fr)!important}}
+/* IP 情報 */
+.intel{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid var(--line);background:var(--card);border-radius:var(--r-md);padding:11px 16px;margin-bottom:16px;font-size:12.5px;color:var(--dim)}
+.intel b{color:var(--txt);font-size:13px}
+.iDot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px rgba(48,209,88,.7)}
+.intel.stale .iDot{background:var(--warn);box-shadow:none}
+.iKinds{display:flex;gap:6px;flex-wrap:wrap}
+.who{display:flex;flex-direction:column;gap:2px;max-width:320px;white-space:normal}
+.who .lb{font-size:12.5px;font-weight:650;color:var(--txt);line-height:1.35}
+.who .nt{font-size:11.5px;color:var(--dim2);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ipSub{display:block;font-size:11px;color:var(--dim2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.tag.k-self,.tag.k-boss{background:rgba(48,209,88,.13);color:var(--ok)}
+.tag.k-platform{background:rgba(10,132,255,.13);color:#5eb0ff}
+.tag.k-searchbot{background:rgba(94,92,230,.16);color:#a5a3ff}
+.tag.k-human{background:rgba(10,132,255,.10);color:#7cc0ff}
+.tag.k-hosting{background:rgba(255,214,10,.13);color:#e8c100}
+.tag.k-malicious{background:rgba(255,69,58,.16);color:var(--bad)}
+[data-theme=light] .tag.k-hosting{color:#8a6d00}
+.evi{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:14px}
+.evi .lb{font-size:15px;font-weight:750;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.evi p{font-size:12.5px;color:var(--dim);margin-top:6px;line-height:1.6}
+.evi ul{margin:8px 0 0 16px;font-size:11.5px;color:var(--dim2);line-height:1.7}
+#toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--card-solid);color:var(--txt);border:1px solid var(--line);padding:11px 22px;border-radius:var(--r-pill);opacity:0;transition:.3s var(--ease);pointer-events:none;z-index:99;box-shadow:var(--shadow);font-size:13px}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media(max-width:1000px){.kpis{grid-template-columns:repeat(3,1fr)}.grid2{grid-template-columns:1fr}}
+@media(max-width:600px){
+  .navIn{padding:0 16px}.brand .tx small{display:none}.live span{display:none}
+  .wrap{padding:22px 16px 60px}.kpis{grid-template-columns:repeat(2,1fr)}
+  .kpi .v{font-size:22px}
+  .hit{grid-template-columns:1fr}.hit .u{grid-column:1}
+}
+</style>
+</head>
+<body>
+<nav><div class="navIn">
+  <a class="brand" href="#"><span class="sh"><svg viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></span><span class="tx"><small>OHMGATESHIELD</small>門牌防護中心</span></a>
+  <span class="sp"></span>
+  <span class="live" id="live"><i></i><span id="liveTxt">即時監看</span></span>
+  <button class="btn" onclick="loadAll(true)">↻ 重新整理</button>
+  <div class="tSwitch" onclick="toggleTheme()" role="switch" tabindex="0" aria-label="白天黑夜切換"><span>☀️</span><span>🌙</span><span class="tKnob"></span></div>
+</div></nav>
+
+<main class="wrap">
+  <div class="head">
+    <div>
+      <div class="k">OHMGATESHIELD · IP INTEL · VULN WATCH</div>
+      <h1>門牌防護中心</h1>
+      <p>誰在敲門、誰可疑、誰被擋下，以及「我們在跑的軟體有沒有中漏洞」。<b style="color:var(--txt)">網頁門牌</b>＝連進你網站的每個 IP；<b style="color:var(--txt)">漏洞情報</b>＝每天比對 OSV.dev／CISA KEV。</p>
+    </div>
+    <div class="rng" id="rng">
+      <button data-h="1">1 小時</button><button data-h="24" class="on">24 小時</button><button data-h="168">7 天</button><button data-h="0">全部</button>
+    </div>
+  </div>
+
+  <div class="mode" id="mode">
+    <button data-m="web" class="on"><span class="mi">🌐</span><span><b>網頁門牌</b><small>對外流量 · 監看＋封鎖</small></span></button>
+    <button data-m="vuln"><span class="mi">🧬</span><span><b>漏洞情報</b><small>我們的軟體有沒有中 · 每天自動</small></span></button>
+  </div>
+  <div id="m-web">
+  <section class="kpis">
+    <div class="kpi"><div class="v" id="kHuman">–</div><div class="l">真人造訪</div></div>
+    <div class="kpi"><div class="v" id="kIps">–</div><div class="l">真人不重複 IP</div></div>
+    <div class="kpi warn"><div class="v" id="kBot">–</div><div class="l">預覽爬蟲／機器人</div></div>
+    <div class="kpi"><div class="v" id="kSelf">–</div><div class="l">自家監控（已排除）</div></div>
+    <div class="kpi bad"><div class="v" id="kRisk">–</div><div class="l">高風險 IP（未封鎖）</div></div>
+    <div class="kpi ok"><div class="v" id="kBlk">–</div><div class="l">已封鎖 IP</div></div>
+  </section>
+
+  <section class="intel" id="intel">
+    <span class="iDot"></span><b>IP 情報引擎</b><span id="iTxt">讀取中…</span>
+    <span class="sp" style="flex:1"></span><span class="iKinds" id="iKinds"></span>
+  </section>
+
+  <section class="bar">
+    <div class="t"><span id="sparkT">真人造訪趨勢</span><span id="sparkR"></span></div>
+    <div class="spark" id="spark"></div>
+  </section>
+
+  <div class="tabs" id="tabs">
+    <button data-p="risk" class="on">風險 IP 排行<span class="n" id="nRisk"></span></button>
+    <button data-p="feed">即時訪客<span class="n" id="nFeed"></span></button>
+    <button data-p="block">封鎖清單<span class="n" id="nBlock"></span></button>
+    <button data-p="top">來源與熱門</button>
+    <button data-p="rule">規則說明</button>
+    <button data-p="log">版本紀錄</button>
+  </div>
+
+  <!-- 風險 IP 排行 -->
+  <section class="pane on" id="p-risk">
+    <div class="filters">
+      <input class="inp" id="rQ" placeholder="搜尋 IP／國家…" style="width:200px">
+      <div class="chips" id="rLv"><button class="chip on" data-v="all">全部</button><button class="chip" data-v="hi">高風險</button><button class="chip" data-v="mid">中風險</button><button class="chip" data-v="bot">爬蟲</button></div>
+      <span class="sp" style="flex:1"></span>
+      <button class="btn red" id="bulkBtn" onclick="bulkBlock()">封鎖全部高風險</button>
+    </div>
+    <div class="tbl"><div class="tblIn"><table>
+      <thead><tr><th>IP</th><th>國</th><th>身分／備註（自動辨識）</th><th>風險</th><th>造訪</th><th>每分鐘峰值</th><th>頁面數</th><th>可疑跡象</th><th>最後出現</th><th></th></tr></thead>
+      <tbody id="rBody"><tr><td colspan="10" class="ph">讀取中…</td></tr></tbody>
+    </table></div></div>
+  </section>
+
+  <!-- 即時訪客 -->
+  <section class="pane" id="p-feed">
+    <div class="filters">
+      <input class="inp" id="fQ" placeholder="搜尋 IP／路徑／UA…" style="width:240px">
+      <div class="chips" id="fKind"><button class="chip on" data-v="human">真人</button><button class="chip" data-v="bot">爬蟲</button><button class="chip" data-v="self">自家</button><button class="chip" data-v="sys">系統 API</button><button class="chip" data-v="all">全部</button></div>
+    </div>
+    <div class="tbl"><div class="tblIn"><table>
+      <thead><tr><th>時間</th><th></th><th>國</th><th>IP</th><th>頁面</th><th>來源</th><th>類型</th><th></th></tr></thead>
+      <tbody id="fBody"><tr><td colspan="8" class="ph">讀取中…</td></tr></tbody>
+    </table></div></div>
+  </section>
+
+  <!-- 封鎖清單 -->
+  <section class="pane" id="p-block">
+    <div class="grid2">
+      <div class="box"><h3>已封鎖 IP</h3><div id="blkList"><div class="ph">讀取中…</div></div></div>
+      <div class="box">
+        <h3>手動封鎖</h3>
+        <div class="form">
+          <input class="inp" id="mIp" placeholder="IP，例如 203.0.113.7" inputmode="decimal">
+          <input class="inp" id="mNote" placeholder="備註（選填）">
+          <button class="btn red" onclick="manualBlock()">封鎖</button>
+        </div>
+        <p style="margin-top:12px">封鎖後該 IP 連任何對外網址一律 <b>404</b>。自家監控 IP 會擋下不讓封，避免把自己鎖在門外。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 來源與熱門 -->
+  <section class="pane" id="p-top">
+    <div class="grid2" style="grid-template-columns:1fr 1fr 1fr">
+      <div class="box"><h3>🌍 國家（真人）</h3><div class="topList" id="tCty"></div></div>
+      <div class="box"><h3>📄 熱門頁面（真人）</h3><div class="topList" id="tPage"></div></div>
+      <div class="box"><h3>🔗 外部來源（真人）</h3><div class="topList" id="tRef"></div></div>
+    </div>
+  </section>
+
+  <!-- 版本紀錄 Change list -->
+  <section class="pane" id="p-log">
+    <div class="box"><h3>Change list 版本紀錄</h3>
+      <div class="topList">
+        <div class="find"><div class="h"><span class="tag self">v1.0.0</span>2026-10-22 · 首次開源</div><p>IP Intel（PTR＋RDAP＋行為判定 7 種身分、惡意掃描自動封鎖、搜尋引擎官方網域驗證）＋Vuln Watch（OSV.dev＋CISA KEV、安全自動修補）＋本儀表板。完整紀錄見 CHANGELOG.md。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 規則說明 -->
+  <section class="pane" id="p-rule">
+    <div class="grid2">
+      <div class="box"><h3>伺服器端（你的網站）</h3><ul>
+        <li>讓網站把每個請求寫成 JSON Lines（或直接用 nginx／Apache combined 格式），並拒絕 <b>blocked_ips.json</b> 裡的 IP。</li>
+        <li>建議另外做速率限制（例如同 IP 60 秒內超過 30 次頁面導覽就封）。</li>
+        <li>封鎖／解封 API（選填）務必加管理員驗證。</li>
+      </ul></div>
+      <div class="box"><h3>IP 情報引擎（全自動）</h3><ul>
+        <li>排程每小時執行 <b>ip_intel.py run</b>：每個新 IP 反查主機名（PTR）＋網段擁有者（RDAP），同網段共用快取，7 天重查一次。</li>
+        <li>依證據自動判定身分並寫備註：自家／站長裝置（推定）／平台連結預覽（LINE、FB…）／搜尋引擎（Google、Bing 會驗證官方網域，冒充的抓出來）／一般訪客／雲端主機／惡意掃描。</li>
+        <li><b>惡意掃描自動封鎖</b>（reason=auto:intel），自家、站長、平台、搜尋引擎永不自動封；誤封可在封鎖清單一鍵解封。</li>
+        <li>結果檔：<b>ip_notes.json</b>；紀錄：<b>ip_intel.log</b>。</li>
+      </ul></div>
+      <div class="box"><h3>本頁判讀（只影響顯示）</h3><ul>
+        <li><b>自家</b>：UA 符合 OGS_CONFIG.selfUa，或該 IP 曾送出這些 UA。</li>
+        <li><b>預覽爬蟲</b>：facebookexternalhit、LINE、bot、spider、crawl、curl、python、Go-http、scanner 等。</li>
+        <li><b>系統 API</b>：/api/ 等程式輪詢。</li>
+        <li><b>風險分數</b>：掃描路徑（.env、wp-、phpmyadmin、.git、.php、cgi-bin…）+40、每分鐘峰值 ≥20 +25、機器人 UA +15、無 UA +15、頁面種類 ≥25 +10。≥60 高、≥30 中。</li>
+
+      </ul></div>
+    </div>
+  </section>
+  </div>
+  <div id="m-vuln" style="display:none">
+  <section class="kpis">
+    <div class="kpi"><div class="v" id="vPk">–</div><div class="l">已比對套件／元件</div></div>
+    <div class="kpi"><div class="v" id="vEnv">–</div><div class="l">執行環境</div></div>
+    <div class="kpi bad"><div class="v" id="vExp">–</div><div class="l">對外服務受影響</div></div>
+    <div class="kpi warn"><div class="v" id="vCH">–</div><div class="l">嚴重＋高風險漏洞</div></div>
+    <div class="kpi"><div class="v" id="vAll">–</div><div class="l">全部已知漏洞</div></div>
+    <div class="kpi"><div class="v" id="vKev">–</div><div class="l">KEV 近 30 天相關</div></div>
+  </section>
+  <section class="intel" id="vIntel"><span class="iDot"></span><b>漏洞情報巡檢</b><span id="vTxt">讀取中…</span></section>
+  <div class="grid2">
+    <div class="box"><h3>結論</h3><div id="vNotes"></div></div>
+    <div class="box"><h3>我們的執行檔版本</h3><div class="topList" id="vBins"></div></div>
+  </div>
+  <div class="box" style="margin-top:16px"><h3>自動修補（對外服務的 Python，安全範圍內）</h3><div id="vPatch"><div class="ph">讀取中…</div></div></div>
+  <div class="box" style="margin-top:16px"><h3>已知漏洞（對外服務優先、嚴重度排序）</h3>
+    <div class="filters" style="margin-top:4px"><div class="chips" id="vSev"><button class="chip on" data-v="exp">對外服務</button><button class="chip" data-v="ch">嚴重＋高</button><button class="chip" data-v="all">全部</button></div></div>
+    <div class="tbl"><div class="tblIn" style="max-height:520px"><table>
+      <thead><tr><th>元件</th><th>目前版本</th><th>嚴重度</th><th>漏洞</th><th>說明</th><th>修補版</th><th>位置</th></tr></thead>
+      <tbody id="vBody"><tr><td colspan="7" class="ph">讀取中…</td></tr></tbody></table></div></div>
+  </div>
+  <div class="box" style="margin-top:16px"><h3>CISA KEV：近 30 天新增、且是我們有裝的產品（已遭實際攻擊利用）</h3><div id="vKevList"><div class="ph">讀取中…</div></div></div>
+  </div>
+</main>
+
+<div class="dr" id="dr"><div class="bk" onclick="closeDr()"></div><div class="pn">
+  <div class="drH"><div class="ip" id="dIp"></div><div class="sub" id="dSub"></div></div>
+  <div class="drB"><div class="drStats" id="dStats"></div><div id="dHits"></div></div>
+  <div class="drF"><button class="btn" onclick="copyIp()">複製 IP</button><button class="btn" id="dAct"></button></div>
+</div></div>
+<div id="toast"></div>
+
+<script>
+/* ===== 設定 Config ===== */
+const OGS_CONFIG={
+  visitLog:'visits.jsonl',           // JSON Lines 訪客紀錄（ip_intel.py 讀同一份）
+  ipNotes:'ip_notes.json',          // ip_intel.py 輸出
+  vulnReport:'vuln_watch.json',     // vuln_watch.py 輸出
+  blocklist:'blocked_ips.json',     // 封鎖清單（GET 讀取）
+  blockApi:null,                    // 選填：POST {ip,note} 封鎖的 API，例 '/api/block'；null＝頁面只讀
+  unblockApi:null,                  // 選填：POST {ip} 解封的 API
+  selfUa:/ohm-health|uptime-kuma|UptimeRobot/i   // 你的監控 UA
+};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const toast=m=>{const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),2200);};
+function setTheme(t){document.documentElement.dataset.theme=t;try{localStorage.setItem('ohm_page_theme',t);}catch(e){}}
+function toggleTheme(){setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');}
+(function(){let s=null;try{s=localStorage.getItem('ohm_page_theme');}catch(e){} setTheme(s||'dark');})();
+
+const SELF_UA=OGS_CONFIG.selfUa;
+const BOT_UA=/bot|spider|crawl|facebookexternalhit|line-poker|slurp|curl|wget|python|go-http|httpclient|okhttp|java\/|scanner|zgrab|masscan|nmap|headless|embedly|discord|telegram|whatsapp|skypeuripreview/i;
+const SYS_P=/\/api\/|\.log(\?|$)/i;
+const SCAN_P=/\.env|wp-|wordpress|phpmyadmin|\.git\b|\.git\/|\.php\b|cgi-bin|xmlrpc|\/\.aws|\/\.ssh|boaform|\/shell|\/HNAP1|\.asp\b|\/vendor\/|\/actuator|\/solr|\/console\b|\.\.\//i;
+
+let NOTE={}, NMETA={}, RECS=[], BL={}, SELF_IPS=new Set(), RANGE_H=24, RISK=[], lastSize=0, timer=null;
+
+function ts(t){ // "MM-DD HH:MM:SS" → ms（年份推定：月份大於本月視為去年）
+  const m=/^(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)/.exec(t||''); if(!m) return 0;
+  const now=new Date(); let y=now.getFullYear(); if(+m[1]>now.getMonth()+1) y--;
+  return new Date(y,+m[1]-1,+m[2],+m[3],+m[4],+m[5]).getTime();
+}
+const IK={self:'self',boss:'self',platform:'bot',searchbot:'bot',hosting:'bot',human:'human',malicious:'human'};
+function kindOf(r){
+  if(SELF_UA.test(r.ua||'')||r.kind==='monitor'||SELF_IPS.has(r.ip)) return 'self';
+  const n=NOTE[r.ip]; if(n&&IK[n.kind]&&!SYS_P.test(r.p||'')) return IK[n.kind];
+  if(SYS_P.test(r.p||'')) return 'sys';
+  if(!r.ua||BOT_UA.test(r.ua)) return 'bot';
+  return 'human';
+}
+const KN={human:'真人',bot:'爬蟲',self:'自家',sys:'系統'};
+const INK={self:'自家',boss:'站長',platform:'平台預覽',searchbot:'搜尋引擎',human:'訪客',hosting:'雲端主機',malicious:'惡意'};
+const whoCell=ip=>{const n=NOTE[ip]; if(!n) return '<span class="dim" style="color:var(--dim2)">待辨識（下次巡檢）</span>';
+  return '<div class="who"><span class="lb"><span class="tag k-'+n.kind+'">'+(INK[n.kind]||n.kind)+'</span> '+esc(n.label)+'</span><span class="nt" title="'+esc(n.note)+'">'+esc(n.note)+'</span></div>';};
+const ipSub=ip=>{const n=NOTE[ip]; return n?'<span class="ipSub" title="'+esc(n.label)+'">'+esc(n.label)+'</span>':'';};
+function renderIntel(){
+  const m=NMETA||{}; const el=$('intel');
+  if(!m.last_run){ $('iTxt').textContent='尚未巡檢（排程每小時跑 ip_intel.py run）'; el.classList.add('stale'); $('iKinds').innerHTML=''; return; }
+  const age=(Date.now()-new Date(m.last_run.replace(' ','T')).getTime())/3600e3;
+  el.classList.toggle('stale',age>2);
+  $('iTxt').innerHTML='v'+esc(m.version)+' · 上次自動巡檢 '+esc(m.last_run.slice(5,16))+' · 已辨識 <b>'+(m.total||0)+'</b> 個 IP'+(m.auto_blocked_last_run&&m.auto_blocked_last_run.length?' · 本輪自動封鎖 <b style="color:var(--bad)">'+m.auto_blocked_last_run.length+'</b>':'');
+  const c=m.counts||{}; $('iKinds').innerHTML=['malicious','hosting','human','platform','searchbot','boss','self'].filter(k=>c[k]).map(k=>'<span class="tag k-'+k+'">'+INK[k]+' '+c[k]+'</span>').join('');
+}
+const flag=c=>(c&&/^[A-Z]{2}$/.test(c))?String.fromCodePoint(...[...c].map(x=>0x1F1A5+x.charCodeAt(0))):'🏳️';
+const dev=ua=>/iPad|Tablet/i.test(ua)?'📲':/Mobile|iPhone|Android/i.test(ua)?'📱':BOT_UA.test(ua||'')?'🤖':'💻';
+function ago(ms){const s=(Date.now()-ms)/1000; if(s<60)return '剛剛'; if(s<3600)return Math.floor(s/60)+' 分鐘前'; if(s<86400)return Math.floor(s/3600)+' 小時前'; return Math.floor(s/86400)+' 天前';}
+
+async function loadAll(manual){
+  try{
+    const [lg,bl]=await Promise.all([
+      fetch(OGS_CONFIG.visitLog+'?_='+Date.now(),{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('log '+r.status);return r.text();}),
+      fetch(OGS_CONFIG.blocklist+'?_='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():{}).catch(()=>({})),
+      fetch(OGS_CONFIG.ipNotes+'?_='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():{}).catch(()=>({}))
+    ]).then(a=>{ const n=a[2]||{}; NOTE=n.ips||{}; NMETA=n._meta||{}; return a; });
+    BL=bl||{};
+    if(lg.length!==lastSize||manual){
+      lastSize=lg.length;
+      const out=[]; const lines=lg.split('\n');
+      for(let i=0;i<lines.length;i++){const l=lines[i]; if(!l) continue; try{const r=JSON.parse(l); r._t=ts(r.t); out.push(r);}catch(e){}}
+      SELF_IPS=new Set(out.filter(r=>SELF_UA.test(r.ua||'')||r.kind==='monitor').map(r=>r.ip));
+      Object.keys(NOTE).forEach(ip=>{ if(NOTE[ip].kind==='self'||NOTE[ip].kind==='boss') SELF_IPS.add(ip); });
+      out.forEach(r=>r._k=kindOf(r));
+      RECS=out;
+    }
+    renderAll();
+    $('live').classList.remove('off'); $('liveTxt').textContent='即時監看 · '+new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
+    if(manual) toast('已更新');
+  }catch(e){
+    $('live').classList.add('off'); $('liveTxt').textContent='讀取失敗';
+    $('rBody').innerHTML='<tr><td colspan="10" class="ph">讀不到訪客紀錄：'+esc(e.message||e)+'</td></tr>';
+  }
+}
+function inRange(){ if(!RANGE_H) return RECS; const c=Date.now()-RANGE_H*3600e3; return RECS.filter(r=>r._t>=c); }
+
+function buildRisk(rs){
+  const m={};
+  rs.forEach(r=>{ if(r._k==='self'||!r.ip) return;
+    const o=m[r.ip]||(m[r.ip]={ip:r.ip,cty:r.cty,n:0,human:0,bot:0,sys:0,paths:new Set(),mins:{},scan:0,noua:0,last:0,uas:new Set()});
+    o.n++; o[r._k]++; o.paths.add(r.p); if(SCAN_P.test((r.p||'')+'?'+(r.q||''))) o.scan++; if(!r.ua) o.noua++;
+    const mk=Math.floor(r._t/60000); o.mins[mk]=(o.mins[mk]||0)+1; if(r._t>o.last) o.last=r._t; if(r.ua) o.uas.add(r.ua); if(r.cty) o.cty=r.cty;
+  });
+  return Object.values(m).map(o=>{
+    o.peak=Math.max(0,...Object.values(o.mins)); o.np=o.paths.size;
+    const fl=[]; let s=0;
+    if(o.scan){s+=40;fl.push('掃描路徑×'+o.scan);}
+    if(o.peak>=20){s+=25;fl.push('高頻 '+o.peak+'/分');}
+    if(o.bot&&!o.human){s+=15;fl.push('機器人 UA');}
+    if(o.noua){s+=15;fl.push('無 UA');}
+    if(o.np>=25){s+=10;fl.push('頁面 '+o.np+' 種');}
+    const nn=NOTE[o.ip]; if(nn&&nn.kind==='malicious'){s=Math.max(s,80);fl.unshift('情報判定惡意');} if(nn&&(nn.kind==='platform'||nn.kind==='searchbot')){s=Math.min(s,20);}
+    o.score=Math.min(100,s); o.flags=fl; o.lv=s>=60?'hi':s>=30?'mid':'lo';
+    o.type=o.human?'human':o.bot?'bot':'sys'; o.blocked=!!BL[o.ip];
+    return o;
+  }).sort((a,b)=>b.score-a.score||b.n-a.n);
+}
+
+function renderAll(){
+  const rs=inRange();
+  const hu=rs.filter(r=>r._k==='human');
+  RISK=buildRisk(rs);
+  $('kHuman').textContent=hu.length.toLocaleString();
+  $('kIps').textContent=new Set(hu.map(r=>r.ip)).size;
+  $('kBot').textContent=rs.filter(r=>r._k==='bot').length.toLocaleString();
+  $('kSelf').textContent=rs.filter(r=>r._k==='self').length.toLocaleString();
+  const hiOpen=RISK.filter(o=>o.lv==='hi'&&!o.blocked);
+  $('kRisk').textContent=hiOpen.length; $('bulkBtn').disabled=!hiOpen.length;
+  $('kBlk').textContent=Object.keys(BL).length;
+  $('nRisk').textContent=RISK.length; $('nBlock').textContent=Object.keys(BL).length;
+  renderIntel(); renderSpark(hu); renderRisk(); renderFeed(); renderBlock(); renderTop(hu);
+}
+function renderSpark(hu){
+  const H=RANGE_H||(RECS.length?Math.max(24,Math.ceil((Date.now()-RECS[0]._t)/3600e3)):24);
+  const N=H<=1?60:H<=24?24:H<=168?28:30, span=H*3600e3, step=span/N, start=Date.now()-span;
+  const b=new Array(N).fill(0); hu.forEach(r=>{const i=Math.floor((r._t-start)/step); if(i>=0&&i<N) b[i]++;});
+  const mx=Math.max(1,...b);
+  const unit=step<3600e3?Math.round(step/60000)+' 分鐘':step<86400e3?Math.round(step/3600e3)+' 小時':Math.round(step/86400e3)+' 天';
+  $('spark').innerHTML=b.map((v,i)=>'<i class="'+(v?'':'z')+'" style="height:'+(v?Math.max(6,v/mx*100):3)+'%" title="'+new Date(start+i*step).toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})+' · '+v+' 次"></i>').join('');
+  $('sparkT').textContent='真人造訪趨勢（每格 '+unit+'）'; $('sparkR').textContent='峰值 '+mx+' 次';
+}
+let rLv='all';
+function renderRisk(){
+  const q=$('rQ').value.trim().toLowerCase();
+  const list=RISK.filter(o=>(rLv==='all'||(rLv==='bot'?o.type==='bot':o.lv===rLv))&&(!q||(o.ip+' '+(o.cty||'')).toLowerCase().includes(q))).slice(0,300);
+  if(!list.length){$('rBody').innerHTML='<tr><td colspan="10" class="ph">這個區間沒有符合的 IP</td></tr>';return;}
+  const col={hi:'var(--bad)',mid:'var(--warn)',lo:'var(--dim2)'};
+  $('rBody').innerHTML=list.map(o=>'<tr>'
+    +'<td><button class="ipBtn" data-ip="'+esc(o.ip)+'">'+esc(o.ip)+'</button></td>'
+    +'<td>'+flag(o.cty)+' <span class="dim" style="color:var(--dim2)">'+esc(o.cty||'')+'</span></td>'
+    +'<td>'+whoCell(o.ip)+'</td>'
+    +'<td><span class="score"><span class="b"><i style="width:'+Math.max(4,o.score)+'%;background:'+col[o.lv]+'"></i></span><span class="tag '+o.lv+'">'+o.score+'</span></span></td>'
+    +'<td class="m">'+o.n+'</td><td class="m">'+o.peak+'</td><td class="m">'+o.np+'</td>'
+    +'<td><div class="flags">'+(o.flags.map(f=>'<span class="flag">'+esc(f)+'</span>').join('')||'<span class="dim" style="color:var(--dim2)">—</span>')+'</div></td>'
+    +'<td class="dim" title="'+new Date(o.last).toLocaleString('zh-TW')+'">'+ago(o.last)+'</td>'
+    +'<td>'+(o.blocked?'<span class="tag blk">已封鎖</span>':(NOTE[o.ip]&&/^(platform|searchbot)$/.test(NOTE[o.ip].kind))?'<span class="tag lo" title="封了會讓 LINE／FB 預覽或搜尋收錄失效">放行</span>':(NOTE[o.ip]&&/^(self|boss)$/.test(NOTE[o.ip].kind))?'<span class="tag self">自家</span>':'<button class="btn red sm" data-blk="'+esc(o.ip)+'">封鎖</button>')+'</td>'
+  +'</tr>').join('');
+}
+let fKind='human';
+function renderFeed(){
+  const q=$('fQ').value.trim().toLowerCase();
+  const rs=inRange(); let out=[];
+  for(let i=rs.length-1;i>=0&&out.length<300;i--){const r=rs[i];
+    if(fKind!=='all'&&r._k!==fKind) continue;
+    if(q&&!((r.ip||'')+' '+(r.p||'')+' '+(r.ua||'')+' '+(r.ref||'')).toLowerCase().includes(q)) continue;
+    out.push(r);}
+  $('nFeed').textContent=rs.filter(r=>r._k==='human').length;
+  if(!out.length){$('fBody').innerHTML='<tr><td colspan="8" class="ph">這個區間沒有符合的紀錄</td></tr>';return;}
+  $('fBody').innerHTML=out.map(r=>{
+    const self=r._k==='self', blk=!!BL[r.ip];
+    let ref=r.ref||''; try{ if(ref) ref=new URL(ref).hostname; }catch(e){}
+    return '<tr><td class="m dim">'+esc(r.t)+'</td><td title="'+esc(r.ua)+'">'+dev(r.ua)+'</td><td>'+flag(r.cty)+'</td>'
+      +'<td><button class="ipBtn" data-ip="'+esc(r.ip)+'">'+esc(r.ip)+'</button>'+ipSub(r.ip)+'</td>'
+      +'<td class="p" title="'+esc(r.p+(r.q?'?'+r.q:''))+'">'+esc(r.p)+(r.q?'<span style="color:var(--dim2)">?'+esc(r.q)+'</span>':'')+'</td>'
+      +'<td class="dim">'+(ref?esc(ref):'直接')+'</td>'
+      +'<td><span class="tag '+r._k+'">'+KN[r._k]+'</span></td>'
+      +'<td>'+(blk?'<span class="tag blk">已封鎖</span>':self?'':'<button class="btn red sm" data-blk="'+esc(r.ip)+'">封鎖</button>')+'</td></tr>';
+  }).join('');
+}
+function renderBlock(){
+  const ks=Object.keys(BL);
+  if(!ks.length){$('blkList').innerHTML='<div class="ph">目前沒有封鎖任何 IP 🛡️</div>';return;}
+  ks.sort((a,b)=>String(BL[b].blocked_at||'').localeCompare(String(BL[a].blocked_at||'')));
+  $('blkList').innerHTML=ks.map(ip=>{const i=BL[ip]||{}; const auto=/^auto/.test(i.reason||'');
+    return '<div class="blkRow"><button class="ipBtn ip" data-ip="'+esc(ip)+'">'+esc(ip)+'</button>'
+      +'<span class="tag '+(auto?'mid':'hi')+'">'+(i.reason==='auto:intel'?'情報自動封鎖':auto?'自動限速':'手動')+'</span>'+ipSub(ip)
+      +'<span class="meta">'+esc(i.blocked_at||'')+(i.note?' · '+esc(i.note):'')+'</span>'
+      +'<button class="btn grn sm" data-unb="'+esc(ip)+'">解封</button></div>';}).join('');
+}
+function topBox(el,obj,n){ const a=Object.entries(obj).sort((x,y)=>y[1]-x[1]).slice(0,n||12);
+  $(el).innerHTML=a.length?a.map(([k,v])=>'<div class="r"><span title="'+esc(k)+'">'+esc(k)+'</span><span>'+v+'</span></div>').join(''):'<div class="ph">尚無資料</div>'; }
+function renderTop(hu){
+  const c={},p={},rf={};
+  hu.forEach(r=>{const k=(flag(r.cty)+' '+(r.cty||'?')); c[k]=(c[k]||0)+1; p[r.p]=(p[r.p]||0)+1;
+    let h=''; try{h=r.ref?new URL(r.ref).hostname:'';}catch(e){} if(h&&!/workers\.dev|trycloudflare|localhost|127\.0\.0\.1|192\.168\./.test(h)) rf[h]=(rf[h]||0)+1;});
+  topBox('tCty',c); topBox('tPage',p); topBox('tRef',rf);
+}
+
+/* 封鎖操作 */
+const IP_RE=/^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}$|^[0-9a-f:]{3,39}$/i;
+async function api(path,body){
+  if(!path) throw new Error('未設定 blockApi（頁面唯讀）：請把 IP 加進封鎖檔，或設定 OGS_CONFIG.blockApi');
+  const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!r.ok) throw new Error(r.status===404?'未認證':'HTTP '+r.status);
+  const j=await r.json().catch(()=>({ok:true})); if(j.ok===false) throw new Error(j.error||'失敗'); return j;
+}
+async function doBlock(ip,note,silent){
+  if(SELF_IPS.has(ip)){ toast('這是自家監控 IP，不能封鎖（會把自己鎖在門外）'); return false; }
+  if(!silent&&!confirm('確定封鎖 '+ip+'？之後這個 IP 連任何對外網址一律 404。')) return false;
+  try{ await api(OGS_CONFIG.blockApi,{ip,note:note||'手動封鎖'}); BL[ip]={blocked_at:new Date().toLocaleString('sv-SE'),reason:'manual',note}; if(!silent){toast('已封鎖 '+ip); renderAll();} return true; }
+  catch(e){ toast('封鎖失敗：'+e.message); return false; }
+}
+async function doUnblock(ip){
+  try{ await api(OGS_CONFIG.unblockApi,{ip}); delete BL[ip]; toast('已解封 '+ip); renderAll(); if($('dr').classList.contains('on')) openDr(ip); }
+  catch(e){ toast('解封失敗：'+e.message); }
+}
+async function bulkBlock(){
+  const list=RISK.filter(o=>o.lv==='hi'&&!o.blocked&&!SELF_IPS.has(o.ip)); if(!list.length) return;
+  if(!confirm('一次封鎖 '+list.length+' 個高風險 IP？\n'+list.slice(0,12).map(o=>o.ip+'（'+o.flags.join('、')+'）').join('\n')+(list.length>12?'\n…':''))) return;
+  let ok=0; for(const o of list){ if(await doBlock(o.ip,'批次封鎖：'+o.flags.join('、'),true)) ok++; }
+  toast('已封鎖 '+ok+' / '+list.length); renderAll();
+}
+function manualBlock(){
+  const ip=$('mIp').value.trim(); if(!IP_RE.test(ip)){ toast('IP 格式不正確'); $('mIp').focus(); return; }
+  doBlock(ip,$('mNote').value.trim()||'手動輸入封鎖').then(ok=>{ if(ok){$('mIp').value='';$('mNote').value='';} });
+}
+
+/* IP 詳情抽屜 */
+let drIp='';
+function openDr(ip){
+  drIp=ip; const hits=RECS.filter(r=>r.ip===ip); const o=buildRisk(hits)[0];
+  const self=SELF_IPS.has(ip), blk=!!BL[ip];
+  $('dIp').textContent=ip;
+  $('dSub').innerHTML=(hits[0]?flag(hits[hits.length-1].cty)+' '+esc(hits[hits.length-1].cty||'')+' · ':'')+'首次 '+esc(hits[0]?hits[0].t:'—')+' · 最後 '+esc(hits.length?hits[hits.length-1].t:'—')
+    +(self?' · <span class="tag self">自家</span>':'')+(blk?' · <span class="tag blk">已封鎖</span>':'')+(o?' · <span class="tag '+o.lv+'">風險 '+o.score+'</span>':'');
+  $('dStats').innerHTML='<div><b>'+hits.length+'</b><span>全部造訪</span></div><div><b>'+(o?o.peak:0)+'</b><span>每分鐘峰值</span></div><div><b>'+new Set(hits.map(r=>r.p)).size+'</b><span>不同頁面</span></div>';
+  const nt=NOTE[ip];
+  $('dHits').innerHTML=(nt?'<div class="evi"><div class="lb"><span class="tag k-'+nt.kind+'">'+(INK[nt.kind]||'')+'</span>'+esc(nt.label)+' <span class="tag lo">把握度：'+esc(nt.confidence||'')+'</span></div><p>'+esc(nt.note)+'</p><ul>'+(nt.evidence||[]).map(e=>'<li>'+esc(e)+'</li>').join('')+'</ul><p style="font-size:11px;color:var(--dim2)">自動辨識於 '+esc(nt.checked_at||'')+'（PTR＋RDAP＋行為）</p></div>':'<div class="evi"><p>這個 IP 還沒被情報引擎辨識，下次整點巡檢會自動補上。</p></div>')
+    +(o&&o.flags.length?'<div class="flags" style="margin-bottom:12px">'+o.flags.map(f=>'<span class="flag">'+esc(f)+'</span>').join('')+'</div>':'')
+    +(hits.slice(-150).reverse().map(r=>'<div class="hit"><span class="t">'+esc(r.t)+'</span><span class="p">'+esc(r.p)+(r.q?'<span style="color:var(--dim2)">?'+esc(r.q)+'</span>':'')+' <span class="tag '+r._k+'">'+KN[r._k]+'</span></span><span class="u">'+dev(r.ua)+' '+esc(r.ua||'（無 UA）')+'</span></div>').join('')||'<div class="ph">log 裡沒有這個 IP 的紀錄</div>');
+  const b=$('dAct');
+  if(blk){ b.className='btn grn'; b.textContent='解封'; b.disabled=false; b.onclick=()=>doUnblock(ip); }
+  else if(self){ b.className='btn'; b.textContent='自家 IP 不可封鎖'; b.disabled=true; b.onclick=null; }
+  else{ b.className='btn red'; b.textContent='封鎖這個 IP'; b.disabled=false; b.onclick=()=>doBlock(ip).then(ok=>ok&&openDr(ip)); }
+  $('dr').classList.add('on');
+}
+function closeDr(){ $('dr').classList.remove('on'); }
+function copyIp(){ (navigator.clipboard&&isSecureContext?navigator.clipboard.writeText(drIp):Promise.reject()).then(()=>toast('已複製 '+drIp)).catch(()=>prompt('手動複製：',drIp)); }
+
+/* 事件 */
+document.addEventListener('click',e=>{
+  const ipB=e.target.closest('[data-ip]'); if(ipB){ openDr(ipB.dataset.ip); return; }
+  const bk=e.target.closest('[data-blk]'); if(bk){ doBlock(bk.dataset.blk); return; }
+  const ub=e.target.closest('[data-unb]'); if(ub){ if(confirm('解封 '+ub.dataset.unb+'？')) doUnblock(ub.dataset.unb); return; }
+});
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeDr(); });
+$('tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  $('tabs').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.id==='p-'+b.dataset.p));
+});
+$('rng').querySelectorAll('button').forEach(b=>b.onclick=()=>{ RANGE_H=+b.dataset.h; $('rng').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); renderAll(); });
+function chipGroup(id,cb){ $(id).querySelectorAll('.chip').forEach(c=>c.onclick=()=>{ $(id).querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===c)); cb(c.dataset.v); }); }
+chipGroup('rLv',v=>{rLv=v;renderRisk();});
+chipGroup('fKind',v=>{fKind=v;renderFeed();});
+let dT; ['rQ','fQ'].forEach(id=>$(id).addEventListener('input',()=>{clearTimeout(dT);dT=setTimeout(()=>{renderRisk();renderFeed();},150);}));
+$('mIp').addEventListener('keydown',e=>{ if(e.key==='Enter') manualBlock(); });
+
+/* 漏洞情報（讀 _vuln_watch.json） */
+let VW=null, vSev='exp';
+const SEVN={CRITICAL:'嚴重',HIGH:'高',MODERATE:'中',MEDIUM:'中',LOW:'低',UNKNOWN:'未分級','':'未分級'};
+const SEVC={CRITICAL:'hi',HIGH:'hi',MODERATE:'mid',MEDIUM:'mid',LOW:'lo'};
+async function loadVuln(){
+  try{ const r=await fetch(OGS_CONFIG.vulnReport+'?_='+Date.now(),{cache:'no-store'}); if(!r.ok) throw new Error('HTTP '+r.status); VW=await r.json(); renderVuln(); }
+  catch(e){ $('vTxt').textContent='尚無資料（排程每天跑 vuln_watch.py run --patch）'; $('vIntel').classList.add('stale'); $('vBody').innerHTML='<tr><td colspan="7" class="ph">讀不到 _vuln_watch.json</td></tr>'; }
+}
+function renderVuln(){
+  const m=VW._meta||{}, F=VW.findings||[];
+  $('vPk').textContent=(m.packages_checked||0).toLocaleString(); $('vEnv').textContent=m.envs||0;
+  $('vExp').textContent=m.exposed_findings||0; const bs=m.by_severity||{}; $('vCH').textContent=(bs.CRITICAL||0)+(bs.HIGH||0);
+  $('vAll').textContent=m.findings||0; $('vKev').textContent=m.kev_recent||0;
+  const age=(Date.now()-new Date((m.last_run||'').replace(' ','T')).getTime())/3600e3; $('vIntel').classList.toggle('stale',!(age<30));
+  $('vTxt').innerHTML='v'+esc(m.version||'')+' · 上次自動巡檢 '+esc((m.last_run||'').slice(5,16))+' · 來源 OSV.dev＋CISA KEV（目錄 '+esc(m.kev_catalog||'')+'）· 本輪新增 '+(m.new_this_run||0);
+  $('vNotes').innerHTML=(VW.notes||[]).map(n=>'<p style="margin-bottom:6px">'+(/^⚠/.test(n)?'<span class="tag hi">注意</span> ':'<span class="tag self">安全</span> ')+esc(n.replace(/^⚠\s*/,''))+'</p>').join('')
+    +'<p>'+((m.exposed_findings||0)?'<span class="tag hi">待修</span> 對外服務用到的套件有 <b>'+m.exposed_findings+'</b> 個已知漏洞，見下表修補版。':'<span class="tag self">安全</span> 對外服務用到的套件目前沒有已知漏洞。')+'</p>';
+  const B=VW.binaries||{}; $('vBins').innerHTML=Object.keys(B).map(k=>'<div class="r"><span>'+esc(k)+'</span><span>'+(B[k]?esc(B[k]):'未安裝')+'</span></div>').join('');
+  const list=F.filter(f=>vSev==='all'||(vSev==='exp'?f.exposed:/CRITICAL|HIGH/.test(f.severity)));
+  $('vBody').innerHTML=list.length?list.slice(0,300).map(f=>'<tr><td><b>'+esc(f.component)+'</b>'+(f.exposed?' <span class="tag hi">對外</span>':'')+'</td><td class="m">'+esc(f.version)+'</td>'
+    +'<td><span class="tag '+(SEVC[f.severity]||'lo')+'">'+(SEVN[f.severity]||esc(f.severity))+'</span></td>'
+    +'<td class="m"><a href="https://osv.dev/vulnerability/'+encodeURIComponent(f.id)+'" target="_blank" rel="noopener" style="color:var(--acc2)">'+esc((f.cve&&f.cve[0])||f.id)+'</a></td>'
+    +'<td class="p" title="'+esc(f.summary)+'">'+esc(f.summary)+'</td><td class="m">'+esc(f.fixed||'—')+'</td>'
+    +'<td class="dim" title="'+esc(f.where)+'">'+esc((f.where||'').split('\\').slice(-3).join('\\'))+'</td></tr>').join('')
+    :'<tr><td colspan="7" class="ph">'+(vSev==='exp'?'對外服務沒有已知漏洞 ✓':'沒有符合的漏洞')+'</td></tr>';
+  const P=VW.patch;
+  $('vPatch').innerHTML=!P?'<div class="ph">尚未執行（排程每天巡檢後自動修補）</div>':
+    '<p style="margin-bottom:10px">'+esc(P.ts||'')+' · 修好 <b style="color:var(--ok)">'+(P.patched||[]).length+'</b> · 下次再試 <b>'+(P.failed||[]).length+'</b> · 已退回 <b>'+(P.rolled_back||[]).length+'</b> · 需評估 <b style="color:var(--warn)">'+(P.held||[]).length+'</b>'+(P.backup?' · 修補前備份 <span class="m" style="font-family:var(--mono);font-size:11px">'+esc(P.backup.split('\\').pop())+'</span>':'')+'</p>'
+    +(P.patched||[]).map(x=>'<div class="blkRow"><span class="tag self">已修</span><span class="ip">'+esc(x.pkg)+'</span><span class="meta">'+esc(x.from)+' → <b>'+esc(x.to)+'</b>'+(x.left_cross_major&&x.left_cross_major.length?' · 另有跨大版本修補 '+esc(x.left_cross_major.join('、')):'')+'</span></div>').join('')
+    +(P.failed||[]).map(x=>'<div class="blkRow"><span class="tag mid">下次再試</span><span class="ip">'+esc(x.pkg)+'</span><span class="meta">'+esc(x.why||'')+(x.to?' · 目標 '+esc(x.to):'')+'</span></div>').join('')
+    +(P.rolled_back||[]).map(x=>'<div class="blkRow"><span class="tag mid">已退回</span><span class="ip">'+esc(x.pkg)+'</span><span class="meta">'+esc(x.why||'')+'</span></div>').join('')
+    +(P.held||[]).map(x=>'<div class="blkRow"><span class="tag lo">需評估</span><span class="ip">'+esc(x.pkg)+'</span><span class="meta">'+esc(x.cur)+' → '+esc(x.fix||'?')+' · '+esc(x.why)+'</span></div>').join('');
+  const K=VW.kev||[];
+  $('vKevList').innerHTML=K.length?K.map(k=>'<div class="blkRow"><span class="tag hi">'+esc(k.component)+'</span><span class="ip">'+esc(k.cve)+'</span><span class="meta">'+esc(k.name)+' · 新增 '+esc(k.added)+(k.ransomware==='Known'?' · <b style="color:var(--bad)">勒索軟體使用中</b>':'')+'<br>'+esc(k.action)+'</span><span class="dim" style="font-size:12px;color:var(--dim2)">我們的版本 '+esc(k.version||'?')+'</span></div>').join(''):'<div class="ph">近 30 天沒有和我們產品相關的已遭利用漏洞 ✓</div>';
+}
+chipGroup('vSev',v=>{vSev=v;if(VW)renderVuln();});
+
+$('mode').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  $('mode').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+  const m=b.dataset.m; $('m-web').style.display=m==='web'?'':'none'; $('m-vuln').style.display=m==='vuln'?'':'none';
+  $('rng').style.visibility=m==='web'?'':'hidden';
+  if(m==='vuln'&&!VW) loadVuln();
+  try{history.replaceState(null,'','#'+m);}catch(e){}
+});
+if(/^#(vuln)$/.test(location.hash)) setTimeout(()=>document.querySelector('#mode [data-m='+location.hash.slice(1)+']').click(),0);
+
+/* 輪詢：只在分頁可見時每 60 秒更新 */
+function startPoll(){ clearInterval(timer); timer=setInterval(()=>{ if(!document.hidden) loadAll(false); },60000); }
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) loadAll(false); });
+loadAll(false); startPoll();
+</script>
+</body>
+</html>
