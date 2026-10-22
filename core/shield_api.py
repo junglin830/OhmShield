@@ -15,7 +15,7 @@ OhmShield 唯一的 API 實作。視窗程式（app/ 的本機伺服器）和 OS
   POST unblock     {"ip"}
   POST scan        {"target": "ip" | "vuln"}
   POST patch       {}        漏洞巡檢＋安全自動修補
-權限由外殼負責（視窗程式：本機 token；OSCLAW：老闆登入）。 MIT License.
+權限由外殼負責（視窗程式：本機 token；網頁入口：你自己的登入驗證）。 MIT License.
 """
 import os, sys, json
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -94,7 +94,7 @@ def handle(method, path, query=None, body=None):
                 if not valid_ip(ip):
                     return _json({"ok": False, "error": "IP 格式不正確"}, 400)
                 if _is_self(ip):
-                    return _json({"ok": False, "error": "這是自家／老闆的 IP，不能封鎖"}, 400)
+                    return _json({"ok": False, "error": "這是自家／站長的 IP，不能封鎖"}, 400)
                 block_ip(ip, "manual", b.get("note") or "")
                 return _json({"ok": True})
             if path == "unblock":
